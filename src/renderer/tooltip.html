@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>Taskbar Office Tooltip</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+        font: 12px/1.45 'Malgun Gothic', 'Segoe UI', sans-serif;
+        color: #f2f0ea;
+      }
+      #card {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 9px 11px 10px;
+        background: #26262e;
+        border: 2px solid #4a4a58;
+        border-radius: 6px;
+      }
+      #head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #b9b6c4;
+      }
+      #badge {
+        flex: none;
+        padding: 0 6px;
+        border-radius: 3px;
+        font-weight: 700;
+        color: #1c1c22;
+      }
+      #workspace,
+      #title {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      #title {
+        margin-top: 4px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      #status {
+        margin-top: 2px;
+      }
+      #message {
+        margin-top: 5px;
+        padding-top: 5px;
+        border-top: 1px solid #3a3a46;
+        color: #b9b6c4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        overflow-wrap: anywhere;
+      }
+      #hint {
+        margin-top: 5px;
+        font-size: 11px;
+        color: #8a8798;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="card">
+      <div id="head"><span id="badge"></span><span id="workspace"></span></div>
+      <div id="title"></div>
+      <div id="status"></div>
+      <div id="message"></div>
+      <div id="hint"></div>
+    </div>
+    <script src="tooltip.js"></script>
+  </body>
+</html>

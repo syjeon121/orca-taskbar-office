@@ -1,0 +1,52 @@
+{
+  "name": "orca-taskbar-office",
+  "version": "0.1.0",
+  "description": "A pixel-art office on your Windows taskbar that shows your Orca agent sessions at work",
+  "author": "syjeon121",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/syjeon121/orca-taskbar-office.git"
+  },
+  "homepage": "https://github.com/syjeon121/orca-taskbar-office#readme",
+  "bugs": "https://github.com/syjeon121/orca-taskbar-office/issues",
+  "keywords": ["orca", "ai-agents", "pixel-art", "electron", "windows", "taskbar", "widget"],
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "start": "npm run build && electron .",
+    "icon": "node scripts/make-icon.mjs",
+    "dist": "npm run build && npm run icon && electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "io.github.syjeon121.orca-taskbar-office",
+    "productName": "Taskbar Office",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "!dist/**/*.map",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "shortcutName": "Taskbar Office"
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "electron": "^45.3.0",
+    "electron-builder": "^26.18.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}

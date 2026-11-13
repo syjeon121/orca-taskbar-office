@@ -2,6 +2,7 @@ import { BrowserWindow, ipcMain, screen } from 'electron'
 import { join } from 'node:path'
 import type { HoverTarget, TooltipData } from '../shared/types'
 import { findSession, onSessionsChanged } from './session-hub'
+import { getSettings } from './settings'
 import { getStripBounds } from './window'
 
 // Info tooltip above a character. The strip window is too short to hold text, so a separate small window floats above it.
@@ -66,7 +67,7 @@ function refresh(): void {
     hideTooltip()
     return
   }
-  const data: TooltipData = { session, now: Date.now() }
+  const data: TooltipData = { session, now: Date.now(), language: getSettings().language }
   tip.webContents.send('tooltip-data', data)
 }
 

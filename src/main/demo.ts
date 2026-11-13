@@ -40,13 +40,13 @@ function addSession(): void {
     worktreeId: null,
     environmentId: null,
     host: '',
-    title: `데모 작업 ${id}`,
+    title: `Demo task ${id}`,
     status: 'done',
     quiet: false,
     unread: false,
     tool: null,
     since: Date.now(),
-    lastMessage: '데모 세션입니다.',
+    lastMessage: 'This is a demo session.',
   })
 }
 

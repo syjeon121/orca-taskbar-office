@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { LANGUAGES, type Language } from '../shared/i18n'
 import { MAX_SCALE, MIN_SCALE, MIN_WIDTH_FRACTION, type Align, type Settings } from '../shared/types'
 
 const DEFAULTS: Settings = {
@@ -14,6 +15,7 @@ const DEFAULTS: Settings = {
   visible: true,
   demoMode: false,
   disabledEnvironments: [],
+  language: 'en',
 }
 
 const ALIGNS: Align[] = ['left', 'center', 'right', 'custom']
@@ -47,6 +49,7 @@ function sanitize(raw: unknown): Settings {
     disabledEnvironments: Array.isArray(r.disabledEnvironments)
       ? r.disabledEnvironments.filter((id): id is string => typeof id === 'string')
       : [],
+    language: LANGUAGES.some((l) => l.value === r.language) ? (r.language as Language) : DEFAULTS.language,
   }
 }
 

@@ -1,3 +1,5 @@
+import type { Language } from './i18n'
+
 /** Logical scene height in unscaled pixels. Window height = SCENE_HEIGHT * scale */
 export const SCENE_HEIGHT = 35
 
@@ -29,6 +31,8 @@ export interface Settings {
   demoMode: boolean
   /** Ids of remote Orca environments to hide from the office */
   disabledEnvironments: string[]
+  /** UI language */
+  language: Language
 }
 
 /** Main → renderer: scene size for the current window size */
@@ -83,6 +87,7 @@ export interface HoverTarget {
 export interface TooltipData {
   session: SessionInfo
   now: number
+  language: Language
 }
 
 export interface TooltipApi {

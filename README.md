@@ -42,18 +42,12 @@ npm start
 | Failed / interrupted | Scratches head, then waits at the desk | Red `X` / gray pause |
 | Resting | Coffee, chats, sofa or gym in the lounge | Speech lines while chatting |
 
-Hover a character for details, click it to open the workspace in Orca. Settings live in the tray icon menu.
-
-> The UI (tray menu and tooltips) is currently in Korean.
+Hover a character for details, click it to open the workspace in Orca. Settings, including the UI language (English, Korean), live in the tray icon menu.
 
 ## Docs
 
 - [Usage](docs/usage.md): controls, tray menu, settings, remote environments, limitations
 - [Development](docs/development.md): project structure, Orca data mapping, dev flags, building the installer
-
-## Related
-
-[Office Tycoon](https://orca.dev/plugins/palulabs/orca-tycoon) shows a pixel office as a panel inside Orca. Taskbar Office is a standalone widget for keeping an eye on agents while Orca isn't in front of you.
 
 ## License
 

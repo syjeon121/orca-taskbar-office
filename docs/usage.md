@@ -39,6 +39,7 @@ Clicking opens the workspace, not the session tab: Orca has no CLI command to op
 | Go home after | How long finished sessions stay: 10 min, 30 min, 1 h, 3 h, 1 day, never |
 | Max characters | Limit including resting sessions: 6, 12, 20, 30. Busy and unread sessions are always shown |
 | Launch at Windows startup | Start at login |
+| Language | UI language: English (default) or 한국어 |
 | (status line) | Orca connection, remotes, working count, shown/total |
 | Remote environments | Toggle each remote environment saved in Orca |
 | Demo mode | Use fake sessions instead of Orca |

@@ -4,7 +4,7 @@ import { openInOrca } from './orca-actions'
 import { findSession, registerSessionIpc } from './session-hub'
 import { createTooltip, hideTooltip } from './tooltip'
 import { applySource, onSourceStatus } from './source'
-import { createTray, refreshTrayMenu, setTrayStatus } from './tray'
+import { createTray, refreshTrayMenu, refreshTrayStatus } from './tray'
 import { applyLayout, createWindow, registerWindowIpc } from './window'
 
 // The installed app (product name "Taskbar Office") and dev runs share one settings folder (%APPDATA%\orca-taskbar-office)
@@ -39,7 +39,7 @@ if (!app.requestSingleInstanceLock()) {
       // Demo sessions have no workspace
       if (session?.worktreeId) void openInOrca(session.worktreeId, session.environmentId)
     })
-    onSourceStatus(setTrayStatus)
+    onSourceStatus(refreshTrayStatus)
     applySource()
 
     // Re-place the strip when monitors, resolution, DPI scale or the taskbar size change

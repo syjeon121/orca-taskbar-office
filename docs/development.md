@@ -75,4 +75,4 @@ $env:TASKBAR_OFFICE_DEMO = 'showcase'; npm start
 
 ## Installer
 
-`npm run dist` produces `release\Taskbar Office Setup <version>.exe` (about 115 MB, NSIS one-click, per-user install). It isn't code-signed.
+`npm run dist` produces `release\Taskbar-Office-Setup-<version>.exe` (about 115 MB, NSIS one-click, per-user install). It isn't code-signed.

@@ -23,7 +23,7 @@ A pixel-art office that lives just above your Windows taskbar. Every [Orca](http
 
 ## Install
 
-Download `Taskbar Office Setup <version>.exe` from [Releases](https://github.com/syjeon121/orca-taskbar-office/releases) and run it. The installer isn't code-signed, so Windows may show an "unknown publisher" warning.
+Download `Taskbar-Office-Setup-<version>.exe` from [Releases](https://github.com/syjeon121/orca-taskbar-office/releases) and run it. The installer isn't code-signed, so Windows may show an "unknown publisher" warning.
 
 To run from source (Node.js 24):
 

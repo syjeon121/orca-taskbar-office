@@ -10,7 +10,15 @@
   },
   "homepage": "https://github.com/syjeon121/orca-taskbar-office#readme",
   "bugs": "https://github.com/syjeon121/orca-taskbar-office/issues",
-  "keywords": ["orca", "ai-agents", "pixel-art", "electron", "windows", "taskbar", "widget"],
+  "keywords": [
+    "orca",
+    "ai-agents",
+    "pixel-art",
+    "electron",
+    "windows",
+    "taskbar",
+    "widget"
+  ],
   "private": true,
   "main": "dist/main.js",
   "scripts": {
@@ -39,7 +47,8 @@
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "shortcutName": "Taskbar Office"
+      "shortcutName": "Taskbar Office",
+      "artifactName": "Taskbar-Office-Setup-${version}.${ext}"
     }
   },
   "devDependencies": {

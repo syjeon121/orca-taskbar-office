@@ -23,7 +23,7 @@ Windows 작업표시줄 바로 위에 사는 픽셀아트 사무실입니다. [O
 
 ## 설치
 
-[Releases](https://github.com/syjeon121/orca-taskbar-office/releases)에서 `Taskbar Office Setup <버전>.exe`를 받아 실행합니다. 코드 서명이 없어서 Windows가 "알 수 없는 게시자" 경고를 띄울 수 있습니다.
+[Releases](https://github.com/syjeon121/orca-taskbar-office/releases)에서 `Taskbar-Office-Setup-<버전>.exe`를 받아 실행합니다. 코드 서명이 없어서 Windows가 "알 수 없는 게시자" 경고를 띄울 수 있습니다.
 
 소스에서 실행하려면 (Node.js 24):
 

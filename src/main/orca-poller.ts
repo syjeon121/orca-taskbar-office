@@ -3,13 +3,13 @@ import { callOrca } from './orca-cli'
 import { publishSessions } from './session-hub'
 import { getSettings } from './settings'
 
-// `orca worktree ps --json`을 주기적으로 호출해 에이전트 세션 목록을 만든다.
-// 이 PC의 Orca와, Orca에 저장된 원격 환경(`orca environment list`) 각각을 따로 조회해 합친다.
-// 상태 값과 필드는 docs/PLAN.md 4장의 검증 결과를 따른다.
+// Polls `orca worktree ps --json` to build the list of agent sessions.
+// This PC's Orca and each remote environment saved in Orca (`orca environment list`) are queried separately and merged.
+// See docs/development.md for how Orca states map to character states.
 
 const POLL_MS = 3000
 const ENVIRONMENT_REFRESH_MS = 60000
-/** 한 조회 대상이 연속으로 이만큼 실패하면 연결이 끊긴 것으로 보고 그쪽 세션을 비운다 */
+/** After this many consecutive failures a target is considered disconnected and its sessions are cleared */
 const FAILURES_BEFORE_CLEAR = 3
 
 interface OrcaAgent {
@@ -78,7 +78,7 @@ interface Candidate {
   info: SessionInfo
 }
 
-/** 조회 대상 하나: 이 PC(environment가 null) 또는 원격 환경 */
+/** One polling target: this PC (environment is null) or a remote environment */
 interface Target {
   environment: OrcaEnvironment | null
   lastGood: Candidate[]
@@ -88,14 +88,14 @@ interface Target {
 
 function parse(stdout: string, environment: OrcaEnvironment | null): Candidate[] {
   const data = JSON.parse(stdout) as { ok?: boolean; result?: { worktrees?: OrcaWorktree[] } }
-  if (!data.ok || !Array.isArray(data.result?.worktrees)) throw new Error('예상과 다른 응답')
+  if (!data.ok || !Array.isArray(data.result?.worktrees)) throw new Error('Unexpected response')
   const candidates: Candidate[] = []
   const seen = new Set<string>()
   for (const worktree of data.result.worktrees) {
     if (worktree.isArchived) continue
     const agents = worktree.agents ?? []
-    // 원격 환경 조회에는 세션별 읽음 정보(activity)가 없고 워크스페이스 단위의 unread만 온다.
-    // 그 경우 워크스페이스에서 가장 최근에 끝난 세션을 읽지 않은 세션으로 본다.
+    // Remote queries have no per-session read state (activity), only a per-workspace unread flag.
+    // In that case, treat the most recently finished session in the workspace as the unread one.
     let fallbackUnread: string | undefined
     if (worktree.unread === true && agents.every((a) => a.activity?.unread === undefined)) {
       fallbackUnread = agents
@@ -111,7 +111,7 @@ function parse(stdout: string, environment: OrcaEnvironment | null): Candidate[]
       candidates.push({
         info: {
           unread,
-          // 원격 세션은 환경 id를 앞에 붙여 다른 PC의 세션과 겹치지 않게 한다
+          // Prefix remote session ids with the environment id so they never collide with another PC's
           id: environment ? `${environment.id}:${agent.paneKey}` : agent.paneKey,
           agentType: agent.agentType ?? 'unknown',
           workspace: worktree.displayName || worktree.repo || '',
@@ -131,15 +131,15 @@ function parse(stdout: string, environment: OrcaEnvironment | null): Candidate[]
   return candidates
 }
 
-/** 퇴근 규칙과 인원 상한을 적용해 화면에 나올 세션을 고른다 */
+/** Applies the go-home rule and the headcount limit to pick the sessions shown */
 function select(candidates: Candidate[], now: number): SessionInfo[] {
-  // 일하는 세션과, 끝났지만 아직 확인하지 않은 세션은 퇴근시키지 않고 상한과 관계없이 모두 보여준다
+  // Busy sessions and finished-but-unread sessions never go home and are always shown, regardless of the limit
   const kept = candidates.filter((c) => c.info.status === 'working' || c.info.status === 'waiting' || c.info.unread)
   const { retireMinutes, maxCharacters } = getSettings()
   const resting = candidates
     .filter((c) => !kept.includes(c) && (retireMinutes === 0 || now - c.info.since < retireMinutes * 60_000))
     .sort((a, b) => b.info.since - a.info.since)
-  // 남는 자리를 최근에 끝난 세션으로 채운다
+  // Fill the remaining room with the most recently finished sessions
   const room = Math.max(0, maxCharacters - kept.length)
   return [...kept, ...resting.slice(0, room)].map((c) => c.info)
 }
@@ -151,7 +151,7 @@ let environments: OrcaEnvironment[] = []
 let environmentsCheckedAt = 0
 const targets = new Map<string, Target>()
 
-/** Orca에 저장된 원격 환경 목록. 트레이 메뉴에서 켜고 끄는 데 쓴다 */
+/** Remote environments saved in Orca. Used to toggle them in the tray menu */
 export function getEnvironments(): OrcaEnvironment[] {
   return environments
 }
@@ -170,7 +170,7 @@ async function refreshEnvironments(now: number): Promise<void> {
       .map((e) => ({ id: e.id, name: e.name || e.id.slice(0, 8) }))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))
   } catch {
-    // 목록을 못 읽으면 이전 목록을 그대로 쓴다
+    // Keep the previous list if it can't be read
   }
 }
 
@@ -194,7 +194,7 @@ async function fetchTarget(target: Target): Promise<void> {
   } catch (error) {
     target.failures++
     target.lastError = error instanceof Error ? error.message.split('\n')[0] : String(error)
-    // 잠깐의 실패에는 직전 결과를 유지해 캐릭터가 들락거리지 않게 한다
+    // Keep the last result on brief failures so characters don't flicker in and out
     if (target.failures >= FAILURES_BEFORE_CLEAR) target.lastGood = []
   }
 }
@@ -235,7 +235,7 @@ export function startPoller(onStatus: (status: PollerStatus) => void): void {
   lastPublished = ''
   targets.clear()
   environmentsCheckedAt = 0
-  // 호출이 겹치지 않게, 이전 호출이 끝난 뒤에 다음 호출을 예약한다
+  // Schedule the next poll only after the previous one finishes so calls never overlap
   const loop = async (): Promise<void> => {
     await poll(onStatus)
     if (running) timer = setTimeout(loop, POLL_MS)

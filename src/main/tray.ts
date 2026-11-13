@@ -10,7 +10,7 @@ import { applyLayout, resolveDisplay } from './window'
 let tray: Tray | null = null
 let status = ''
 
-/** 세션 공급원의 상태를 트레이 툴팁과 메뉴 첫 줄에 보여준다 */
+/** Shows the session source status in the tray tooltip and the first menu line */
 export function setTrayStatus(text: string): void {
   if (text === status) return
   status = text
@@ -43,8 +43,8 @@ const RETIRE_OPTIONS: { label: string; minutes: number }[] = [
 const MAX_CHARACTER_OPTIONS = [6, 12, 20, 30]
 
 /**
- * 자동 실행 등록에 쓸 실행 파일과 인자.
- * 설치본은 자기 자신을 등록하면 되지만, 개발 중에는 electron.exe에 프로젝트 폴더를 넘겨야 한다.
+ * Executable and arguments to register for launch at login.
+ * The installed app registers itself; in development electron.exe must be given the project folder.
  */
 function loginItemOptions(): { path: string; args: string[] } {
   return app.isPackaged ? { path: process.execPath, args: [] } : { path: process.execPath, args: [app.getAppPath()] }
@@ -59,7 +59,7 @@ function change(patch: Partial<Settings>): void {
 function displayItems(settings: Settings): MenuItemConstructorOptions[] {
   const primaryId = screen.getPrimaryDisplay().id
   const activeId = resolveDisplay(settings).id
-  // 왼쪽에 있는 모니터부터 번호를 매긴다
+  // Number monitors from left to right
   const displays = [...screen.getAllDisplays()].sort((a, b) => a.bounds.x - b.bounds.x || a.bounds.y - b.bounds.y)
   return displays.map((d, i) => ({
     label: `모니터 ${i + 1} (${d.size.width}×${d.size.height})${d.id === primaryId ? ' · 주 모니터' : ''}`,
@@ -94,7 +94,7 @@ export function refreshTrayMenu(): void {
           label: w.label,
           type: 'radio',
           checked: Math.abs(settings.widthFraction - w.value) < 0.001,
-          // 드래그로 정한 위치는 폭을 고르면 가운데 정렬로 되돌린다
+          // Picking a width resets a dragged position back to centered
           click: () => change({ widthFraction: w.value, align: settings.align === 'custom' ? 'center' : settings.align }),
         })),
       },
@@ -192,7 +192,7 @@ export function refreshTrayMenu(): void {
 export function createTray(): void {
   tray = new Tray(createTrayIcon())
   tray.setToolTip('Taskbar Office')
-  // 왼쪽 클릭은 보이기/숨기기 전환
+  // Left click toggles visibility
   tray.on('click', () => change({ visible: !getSettings().visible }))
   refreshTrayMenu()
 }

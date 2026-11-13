@@ -3,18 +3,18 @@ import { CHAR_H, CHAR_W, COFFEE_SLOTS, TABLE_SIDE_OFFSET, TREADMILL_H, type Geom
 import { drawBackEffects, drawFloor, drawFrontEffects, drawShadow, renderSceneArt, type SceneArt } from './scene-art'
 import { drawBubble, drawCharacterOutlined, lookFor, toolKind, type BubbleKind, type Look, type Pose } from './sprites'
 
-// 세션 목록을 받아 캐릭터들을 움직이고 그린다.
-// 캐릭터는 "있어야 할 자리"를 상태에서 계산하고, 그 자리로 걸어가 도착하면 자세를 잡는다.
+// Takes the session list, then moves and draws the characters.
+// Each character derives where it should be from its status, walks there, and strikes a pose on arrival.
 
 type Place =
-  /** 오피스의 일하는 자리 (책상, 스탠딩 데스크, 공용 테이블, 빈백) */
+  /** A work spot in the office (desk, standing desk, shared table, beanbag) */
   | { kind: 'desk'; i: number }
-  /** 자리가 모자랄 때 서서 일하는 자리 */
+  /** Standing spot used when the office runs out of seats */
   | { kind: 'overflow'; i: number }
   | { kind: 'wander'; frac: number }
   | { kind: 'coffee'; slot: number }
   | { kind: 'sofa'; sofa: number; seat: number }
-  /** 수다 테이블의 왼쪽(0) 또는 오른쪽(1) */
+  /** Left (0) or right (1) side of a chat table */
   | { kind: 'table'; table: number; side: number }
   | { kind: 'treadmill' }
   | { kind: 'lift' }
@@ -30,26 +30,26 @@ interface Character {
   facing: 1 | -1
   place: Place
   arrived: boolean
-  /** 배정받은 작업 자리. 일하는 동안과 끝난 직후 연출 동안 유지 */
+  /** Assigned work spot. Kept while working and until the result has been acknowledged */
   work: Place | null
-  /** 작업이 끝난 직후 자리에서 하는 동작 */
+  /** Animation played at the desk right after finishing */
   hold: { pose: 'cheer' | 'trouble'; until: number } | null
-  /** 끝난 뒤 머리 위에 남는 결과 표시. 사용자가 확인할 때까지 사라지지 않는다 */
+  /** Result mark shown overhead after finishing. Stays until the user acknowledges it */
   mark: Mark | null
-  /** 사용자가 캐릭터를 클릭해 결과를 확인함. Orca의 읽음 표시가 늦게 따라와도 다시 띄우지 않는다 */
+  /** The user clicked the character to acknowledge the result. Don't show it again even if Orca's read state lags behind */
   acked: boolean
-  /** 라운지에서 지금 하는 행동을 끝낼 시각 */
+  /** When the current lounge activity ends */
   loungeUntil: number
   alpha: number
   leaving: boolean
 }
 
-const WALK_SPEED = 26 // 장면 픽셀/초
+const WALK_SPEED = 26 // scene pixels per second
 const CHEER_MS = 2600
 const TROUBLE_MS = 6000
-/** 수다 중 말하는 사람이 바뀌는 간격 */
+/** How often the speaker switches during a chat */
 const TALK_TURN_MS = 1500
-/** 작업 중 말풍선: 이 주기 중 앞부분은 도구 아이콘, 나머지는 점 세 개 */
+/** Working bubble: the tool icon for the first part of this cycle, three dots for the rest */
 const TOOL_CYCLE_MS = 2600
 const TOOL_SHOW_MS = 1700
 
@@ -70,7 +70,7 @@ function between(min: number, max: number): number {
 export class Office {
   private chars: Character[] = []
   private g: Geometry
-  /** 외곽선까지 입혀 미리 그려 둔 가구 그림 */
+  /** Pre-rendered, outlined furniture */
   private art: SceneArt
   private seeded = false
   hoveredId: string | null = null
@@ -83,7 +83,7 @@ export class Office {
   setGeometry(geometry: Geometry): void {
     this.g = geometry
     this.art = renderSceneArt(geometry)
-    // 창 폭이 바뀌면 가구 구성이 달라진다. 사라진 자리는 반납하고 다시 고르게 한다
+    // A new window width changes the furniture. Release spots that no longer exist so they get picked again
     for (const c of this.chars) {
       if (c.work && !this.exists(c.work)) c.work = null
       if (!this.exists(c.place)) this.go(c, { kind: 'wander', frac: Math.random() })
@@ -101,14 +101,14 @@ export class Office {
       }
       incoming.delete(c.id)
       this.onStatusChange(c, c.info.status, next.status, next.quiet, now)
-      // Orca에서 확인하면(읽음) 결과 표시를 내린다
+      // Viewing the session in Orca (read) clears the result mark
       if (c.info.unread && !next.unread && !isBusy(next.status)) c.mark = null
       if (!next.unread) c.acked = false
       c.info = next
       c.leaving = false
     }
     for (const info of incoming.values()) {
-      // 처음 받은 목록의 세션은 이미 자리에 있는 것으로 시작하고, 이후 추가된 세션은 문으로 출근한다
+      // Sessions in the first list start in place; sessions added later arrive through the door
       const c: Character = {
         id: info.id,
         info,
@@ -144,7 +144,7 @@ export class Office {
       return
     }
     if (!isBusy(prev) || quiet) return
-    // 작업이 방금 끝남. 자리에서 연출한 뒤, 확인할 때까지 그 자리에 머물며 결과 표시를 달고 있는다
+    // Just finished. Animate at the desk, then stay there with the result mark until acknowledged
     const atWork = c.arrived && c.work !== null && samePlace(c.place, c.work)
     c.acked = false
     if (next === 'done') {
@@ -156,7 +156,7 @@ export class Office {
     }
   }
 
-  /** 현재 배치에 그 자리가 실제로 있는지 */
+  /** Whether the spot exists in the current layout */
   private exists(place: Place): boolean {
     const g = this.g
     switch (place.kind) {
@@ -206,7 +206,7 @@ export class Office {
 
   private allocateWork(c: Character): Place {
     const taken = (p: Place): boolean => this.chars.some((o) => o !== c && o.work !== null && samePlace(o.work, p))
-    // 빈 자리 중 아무 곳이나 고른다. 책상, 스탠딩 데스크, 공용 테이블, 빈백이 골고루 쓰인다
+    // Pick any free spot so desks, standing desks, shared tables and beanbags all get used
     const free = this.g.stations.map((_, i): Place => ({ kind: 'desk', i })).filter((p) => !taken(p))
     if (free.length > 0) return free[Math.floor(Math.random() * free.length)]
     for (let i = 0; ; i++) {
@@ -215,7 +215,7 @@ export class Office {
     }
   }
 
-  /** 라운지에서 다음에 할 일을 고른다: 커피, 수다, 소파, 운동, 서성이기 */
+  /** Picks the next lounge activity: coffee, chat, sofa, workout or wandering */
   private pickLounge(c: Character): Place {
     const others = this.chars.filter((o) => o !== c && !o.leaving)
     const free = (p: Place): boolean => !others.some((o) => samePlace(o.place, p))
@@ -228,7 +228,7 @@ export class Office {
         if (free(p)) return p
       }
     } else if (roll < 0.48) {
-      // 수다: 혼자 서 있는 사람이 있는 테이블에 먼저 합류하고, 없으면 빈 테이블에서 기다린다
+      // Chat: join a table where someone is standing alone, otherwise wait at an empty one
       const seats: Place[] = []
       for (let table = 0; table < g.tables.length; table++) {
         for (let side = 0; side < 2; side++) seats.push({ kind: 'table', table, side })
@@ -252,7 +252,7 @@ export class Office {
       if (p) return p
     }
 
-    // 서성일 자리는 후보 몇 개 중 다른 캐릭터나 수다 테이블 자리와 가장 덜 겹치는 곳으로 고른다
+    // Wander to whichever of a few candidates overlaps least with other characters and chat table spots
     const occupied = others.filter((o) => LOUNGE_KINDS.includes(o.place.kind)).map((o) => this.placeX(o.place))
     for (const x of g.tables) occupied.push(x, x + TABLE_SIDE_OFFSET)
     let best: Place = { kind: 'wander', frac: Math.random() }
@@ -269,7 +269,7 @@ export class Office {
     return best
   }
 
-  /** 상태에 맞는 자리를 정한다 */
+  /** Decides where the character should be for its status */
   private decidePlace(c: Character, now: number): void {
     if (c.hold && now >= c.hold.until) c.hold = null
     if (c.leaving) {
@@ -284,7 +284,7 @@ export class Office {
     }
     c.work = null
     const inLounge = LOUNGE_KINDS.includes(c.place.kind)
-    // 수다가 한창일 때는 자리를 뜨지 않고 조금 더 머문다
+    // Stay a bit longer while a chat is going
     if (inLounge && c.arrived && now >= c.loungeUntil && this.chatPartner(c) && Math.random() < 0.7) {
       c.loungeUntil = now + between(4000, 9000)
       return
@@ -333,7 +333,7 @@ export class Office {
     }
   }
 
-  /** 같은 수다 테이블 맞은편에 도착해 있는 상대 */
+  /** The partner who has arrived on the other side of the same chat table */
   private chatPartner(c: Character): Character | null {
     if (!c.arrived || c.place.kind !== 'table') return null
     const { table, side } = c.place
@@ -344,7 +344,7 @@ export class Office {
     )
   }
 
-  /** 수다 중 지금 말할 차례인지. 테이블의 왼쪽과 오른쪽이 번갈아 말한다 */
+  /** Whether it's this character's turn to talk. Left and right sides take turns */
   private isSpeaking(c: Character, now: number): boolean {
     return c.place.kind === 'table' && this.chatPartner(c) !== null && Math.floor(now / TALK_TURN_MS) % 2 === c.place.side
   }
@@ -356,7 +356,7 @@ export class Office {
       if (c.arrived) {
         c.x = target
       } else if (c.id !== this.hoveredId) {
-        // 커서가 올라가 있는 동안은 멈춰 서서 클릭하기 쉽게 한다
+        // Stop while hovered so the character is easy to click
         const dx = target - c.x
         const step = WALK_SPEED * dt
         if (Math.abs(dx) <= step) {
@@ -367,7 +367,7 @@ export class Office {
           c.x += c.facing * step
         }
       }
-      // 출근은 문에서 서서히 나타나고, 퇴근은 문에 도착한 뒤 서서히 사라진다
+      // Fade in at the door when arriving; fade out after reaching the door when leaving
       if (c.leaving && c.arrived && c.place.kind === 'door') c.alpha -= dt * 2.5
       else if (c.alpha < 1) c.alpha = Math.min(1, c.alpha + dt * 2.5)
     }
@@ -396,7 +396,7 @@ export class Office {
       case 'sofa':
         return 'sit'
       case 'table':
-        // 혼자면 커피를 마시며 기다리고, 상대가 오면 번갈아 말한다
+        // Sip coffee while alone; take turns talking once a partner arrives
         return this.isSpeaking(c, now) ? 'talk' : 'drink'
       case 'treadmill':
         return 'run'
@@ -412,15 +412,15 @@ export class Office {
     if (c.info.status === 'waiting') return 'bang'
     if (c.info.status === 'working') {
       if (!c.arrived) return null
-      // 사용 중인 도구 아이콘과 점 세 개를 번갈아 보여준다
+      // Alternate between the current tool icon and three dots
       const tool = toolKind(c.info.tool)
       return tool && now % TOOL_CYCLE_MS < TOOL_SHOW_MS ? tool : 'dots'
     }
-    // 확인하지 않은 결과가 있으면 확인할 때까지 계속 달고 있는다
+    // Keep showing an unacknowledged result until it's acknowledged
     return this.pendingResult(c) ?? (this.isSpeaking(c, now) ? 'talk' : null)
   }
 
-  /** 아직 확인하지 않은 결과. 끝나는 순간을 봤으면 그 표시를, 처음부터 끝나 있던 세션은 Orca의 읽음 정보를 따른다 */
+  /** The unacknowledged result, if any. Uses the mark if we saw the session finish; otherwise follows Orca's read state */
   private pendingResult(c: Character): Mark | null {
     if (c.leaving || isBusy(c.info.status)) return null
     if (c.mark) return c.mark
@@ -428,7 +428,7 @@ export class Office {
     return null
   }
 
-  /** 사용자가 캐릭터를 클릭해 결과를 확인함 */
+  /** The user clicked the character to acknowledge its result */
   acknowledge(id: string): void {
     const c = this.chars.find((o) => o.id === id)
     if (!c || !this.pendingResult(c)) return
@@ -437,7 +437,7 @@ export class Office {
     c.hold = null
   }
 
-  /** 장면 좌표가 가리키는 캐릭터. 겹치면 나중에 그려진(앞에 있는) 쪽 */
+  /** The character at a scene coordinate. When they overlap, the one drawn last (in front) wins */
   hitTest(x: number, y: number): string | null {
     const top = this.g.floorY - CHAR_H - TREADMILL_H
     if (y < top || y >= this.g.floorY) return null
@@ -449,7 +449,7 @@ export class Office {
     return null
   }
 
-  /** 캐릭터 가운데의 장면 x좌표 */
+  /** Scene x coordinate of the character's center */
   centerX(id: string): number | null {
     const c = this.chars.find((o) => o.id === id)
     return c ? Math.round(c.x) + CHAR_W / 2 : null
@@ -467,7 +467,7 @@ export class Office {
     drawBackEffects(ctx, g, now)
 
     const atDesk = (c: Character): boolean => c.arrived && c.place.kind === 'desk'
-    /** 러닝머신 위에서는 벨트 높이만큼 올라가 있다 */
+    /** Raised by the belt height while on the treadmill */
     const feetY = (c: Character): number => g.floorY - (c.arrived && c.place.kind === 'treadmill' ? TREADMILL_H : 0)
     const drawOne = (c: Character): void => {
       ctx.globalAlpha = Math.max(0, Math.min(1, c.alpha))
@@ -475,14 +475,14 @@ export class Office {
       ctx.globalAlpha = 1
     }
 
-    // 바닥 그림자는 가구와 캐릭터보다 먼저 깐다
+    // Floor shadows go down before furniture and characters
     for (const c of this.chars) {
       ctx.globalAlpha = Math.max(0, Math.min(1, c.alpha))
       drawShadow(ctx, Math.round(c.x), g.floorY)
     }
     ctx.globalAlpha = 1
 
-    // 자리에 있는 캐릭터는 책상 상판과 모니터 뒤에, 나머지는 가구 앞에 그린다
+    // Seated characters are drawn behind the desktop and monitor; everyone else in front of the furniture
     for (const c of this.chars) if (atDesk(c)) drawOne(c)
     ctx.drawImage(this.art.front.canvas, 0, 0)
     const lit = (station: number): boolean =>
@@ -492,7 +492,7 @@ export class Office {
 
     for (const c of this.chars) {
       const kind = this.bubbleOf(c, now)
-      // 확인을 기다리는 표시는 위아래로 까딱여 눈에 띄게 한다
+      // Bob marks that await acknowledgement so they stand out
       const bob = this.pendingResult(c) && Math.floor(now / 450) % 2 ? 1 : 0
       if (kind) drawBubble(ctx, Math.round(c.x), feetY(c) - CHAR_H - bob, kind, g.w, now)
     }

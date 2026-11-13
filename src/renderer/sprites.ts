@@ -1,13 +1,13 @@
 import { addOutline, makeSurface, mix, OUTLINE, OUTLINE_HOVER, shade } from './pixel'
 import { CHAR_H, CHAR_W } from './scene'
 
-// 캐릭터와 말풍선을 사각형 조합으로 그린다. 이미지 파일 없이 코드만으로 외형과 자세를 만든다.
+// Draws characters and speech bubbles from rectangles. Looks and poses are pure code, no image files.
 
 export type Pose = 'stand' | 'walk' | 'run' | 'lift' | 'talk' | 'type' | 'typeStand' | 'lapType' | 'standType' | 'sit' | 'wave' | 'cheer' | 'trouble' | 'drink'
 export type ToolKind = 'terminal' | 'edit' | 'read' | 'search' | 'web' | 'agent'
 export type BubbleKind = 'dots' | 'bang' | 'check' | 'fail' | 'pause' | 'talk' | ToolKind
 
-/** 도구 이름을 말풍선 아이콘 종류로 분류한다. 에이전트마다 도구 이름이 달라 이름의 일부로 판단한다 */
+/** Maps a tool name to a bubble icon. Tool names differ between agents, so this matches on name fragments */
 export function toolKind(tool: string | null): ToolKind | null {
   if (!tool) return null
   const name = tool.toLowerCase()
@@ -27,12 +27,12 @@ export interface Look {
   hair: string
   hairLight: string
   hairStyle: number
-  /** 모자 색. hat이 false면 쓰지 않음 */
+  /** Hat color. null means no hat */
   hat: string | null
   hatDark: string
   hatLight: string
   beard: boolean
-  /** 셔츠 앞쪽 무늬: 0 없음, 1 가로 줄무늬, 2 넥타이, 3 멜빵 */
+  /** Shirt front detail: 0 none, 1 stripe, 2 tie, 3 suspenders */
   pattern: number
   accent: string
   shirt: string
@@ -67,7 +67,7 @@ function hash(text: string): number {
   return h >>> 0
 }
 
-/** 세션 id를 시드로 써서 같은 세션은 항상 같은 외형이 된다. 부위마다 따로 해시해 조합이 고르게 섞이게 한다 */
+/** Seeds the look from the session id so a session always looks the same. Each part is hashed separately for an even mix */
 export function lookFor(id: string): Look {
   const pick = <T>(part: string, list: readonly T[]): T => list[hash(id + ':' + part) % list.length]
   const chance = (part: string, percent: number): boolean => hash(id + ':' + part) % 100 < percent
@@ -76,7 +76,7 @@ export function lookFor(id: string): Look {
   const shirt = pick('shirt', SHIRTS)
   const pants = pick('pants', PANTS)
   const hairStyle = hash(id + ':style') % HAIR_STYLES
-  // 모자는 머리 모양과 별개로 가끔 쓴다. 셔츠와 같은 색이면 묻히니 피한다
+  // Hats are occasional and independent of hair style. Skip the shirt color so the hat doesn't blend in
   const hatChoices = HATS.filter((c) => c !== shirt)
   const hat = chance('hat', 22) ? pick('hatColor', hatChoices) : null
   const accent = pick('accent', ACCENTS.filter((c) => c !== shirt))
@@ -89,7 +89,7 @@ export function lookFor(id: string): Look {
     accent,
     skin,
     skinDark: shade(skin, -0.16),
-    // 볼은 피부색에 붉은 기를 살짝 더한다
+    // Cheeks are the skin tone with a touch of red
     blush: mix(skin, '#e2705f', 0.3),
     hair,
     hairLight: shade(hair, 0.28),
@@ -102,15 +102,15 @@ export function lookFor(id: string): Look {
   }
 }
 
-// 캐릭터를 따로 그려 외곽선을 입히는 작업용 캔버스. 팔, 아령, 노트북이 몸 밖으로 나가므로 여백을 둔다
+// Scratch canvas for drawing and outlining a character. Padded because arms, dumbbells and laptops stick out
 const PAD_X = 6
 const PAD_TOP = 4
 const PAD_BOTTOM = 1
 const sprite = makeSurface(CHAR_W + PAD_X * 2, CHAR_H + PAD_TOP + PAD_BOTTOM)
 
 /**
- * 외곽선을 입힌 캐릭터를 그린다. highlighted면 외곽선이 노란색이 된다 (커서가 올라간 캐릭터).
- * (x, feetY)는 캐릭터의 왼쪽 끝과 발바닥 높이.
+ * Draws an outlined character. When highlighted (hovered) the outline turns yellow.
+ * (x, feetY) is the character's left edge and the height of its soles.
  */
 export function drawCharacterOutlined(
   ctx: Ctx,
@@ -132,8 +132,8 @@ export function drawCharacterOutlined(
 type Ctx = CanvasRenderingContext2D
 
 /**
- * (x, feetY)는 캐릭터의 왼쪽 끝과 발바닥 높이.
- * 부위 좌표는 오른쪽을 보는 기준으로 쓰고, facing이 -1이면 좌우를 뒤집는다.
+ * (x, feetY) is the character's left edge and the height of its soles.
+ * Part coordinates assume the character faces right; facing -1 mirrors them.
  */
 export function drawCharacter(
   ctx: Ctx,
@@ -154,43 +154,43 @@ export function drawCharacter(
     ctx.fillRect(facing === 1 ? x + dx : x + CHAR_W - dx - w, top + dy, w, h)
   }
 
-  // 다리
+  // Legs
   if (pose === 'type' || pose === 'sit' || pose === 'lapType') {
-    p(look.pants, 2, 11, 7, 1) // 허벅지
+    p(look.pants, 2, 11, 7, 1) // thighs
     p(look.pantsDark, 2, 11, 2, 1)
-    p(look.pants, 7, 12, 2, 1) // 정강이
+    p(look.pants, 7, 12, 2, 1) // shins
     p(SHOE, 7, 13, 3, 1)
   } else {
     const stride = (pose === 'walk' && slow) || (pose === 'run' && fast) ? 1 : 0
-    p(look.pantsDark, 1 + stride, 11, 2, 2) // 뒤쪽 다리는 어둡게
+    p(look.pantsDark, 1 + stride, 11, 2, 2) // back leg is darker
     p(look.pants, 5 - stride, 11, 2, 2)
     p(SHOE, 1 + stride, 13, 2, 1)
     p(SHOE, 5 - stride, 13, 2, 1)
   }
 
-  // 몸통: 등 쪽과 밑단을 어둡게 해 입체감을 주고, 목 부분은 피부색으로 판다
+  // Torso: darker back and hem for depth, with the neckline cut out in skin tone
   p(look.shirt, 1, 6, 6, 5)
   p(look.shirtDark, 1, 7, 1, 4)
   p(look.shirtDark, 1, 10, 6, 1)
   p(look.shirtLight, 5, 7, 1, 2)
   p(look.skinDark, 3, 6, 2, 1)
   switch (look.pattern) {
-    case 1: // 가로 줄무늬
+    case 1: // stripe
       p(look.accent, 2, 8, 5, 1)
       break
-    case 2: // 넥타이
+    case 2: // tie
       p(look.accent, 4, 7, 1, 3)
       break
-    case 3: // 멜빵
+    case 3: // suspenders
       p(look.accent, 2, 7, 1, 3)
       p(look.accent, 6, 7, 1, 3)
       break
     default:
   }
 
-  // 머리
+  // Head
   p(look.skin, 1, 2, 6, 4)
-  p(look.skinDark, 1, 5, 6, 1) // 턱 그림자
+  p(look.skinDark, 1, 5, 6, 1) // chin shadow
   p(EYE, 3, 3, 1, 1)
   p(EYE, 5, 3, 1, 1)
   p(look.blush, 6, 4, 1, 1)
@@ -200,31 +200,31 @@ export function drawCharacter(
     p(look.hair, 6, 4, 1, 1)
   }
   switch (look.hairStyle) {
-    case 0: // 짧은 머리
+    case 0: // short
       p(look.hair, 1, 0, 6, 2)
       p(look.hair, 1, 2, 1, 2)
       p(look.hairLight, 4, 0, 2, 1)
       break
-    case 3: // 단발
+    case 3: // bob
       p(look.hair, 1, 0, 6, 2)
       p(look.hair, 0, 1, 2, 4)
       p(look.hair, 6, 2, 1, 1)
       p(look.hairLight, 3, 0, 2, 1)
       break
-    case 4: // 포니테일
+    case 4: // ponytail
       p(look.hair, 1, 0, 6, 2)
       p(look.hair, 1, 2, 1, 1)
       p(look.hair, 0, 1, 1, 2)
       p(look.hair, -1, 2, 1, 3)
       p(look.hairLight, 4, 0, 2, 1)
       break
-    case 5: // 올림머리
+    case 5: // bun
       p(look.hair, 2, -2, 3, 2)
       p(look.hair, 1, 0, 6, 2)
       p(look.hair, 1, 2, 1, 1)
       p(look.hairLight, 3, -2, 1, 1)
       break
-    case 6: // 곱슬
+    case 6: // curly
       p(look.hair, 0, 0, 8, 2)
       p(look.hair, 1, -1, 2, 1)
       p(look.hair, 4, -1, 2, 1)
@@ -232,20 +232,20 @@ export function drawCharacter(
       p(look.hairLight, 2, 0, 1, 1)
       p(look.hairLight, 5, 0, 1, 1)
       break
-    case 7: // 옆가르마 짧은 머리
+    case 7: // short with side part
       p(look.hair, 1, 0, 6, 1)
       p(look.hair, 1, 1, 3, 1)
       p(look.hair, 6, 1, 1, 1)
       p(look.hair, 1, 2, 1, 2)
       p(look.hairLight, 2, 0, 3, 1)
       break
-    case 1: // 긴 머리
+    case 1: // long
       p(look.hair, 1, 0, 6, 2)
       p(look.hair, 0, 1, 2, 6)
       p(look.hairLight, 4, 0, 2, 1)
       p(look.hairLight, 0, 3, 1, 2)
       break
-    case 2: // 삐죽 머리
+    case 2: // spiky
       p(look.hair, 1, 1, 6, 1)
       p(look.hair, 1, 0, 1, 1)
       p(look.hair, 3, 0, 1, 1)
@@ -253,19 +253,19 @@ export function drawCharacter(
       p(look.hair, 1, 2, 1, 1)
       p(look.hairLight, 5, 0, 1, 1)
       break
-    default: // 까까머리
+    default: // buzz cut
       p(look.hair, 1, 1, 6, 1)
       p(look.hair, 1, 2, 1, 1)
   }
   if (look.hat) {
-    // 챙 달린 모자. 머리 모양 위에 덮어 쓴다
+    // Cap with a brim, drawn over the hair
     p(look.hat, 1, 0, 6, 2)
     p(look.hatLight, 2, 0, 3, 1)
     p(look.hatDark, 1, 1, 6, 1)
     p(look.hatDark, 7, 1, 1, 1)
   }
 
-  // 팔. 뒤쪽 팔(dx 0)과 앞쪽 팔(dx 7)
+  // Arms: back arm (dx 0) and front arm (dx 7)
   const armDown = (dx: number): void => {
     p(dx === 0 ? look.shirtDark : look.shirt, dx, 6, 1, 3)
     p(look.skin, dx, 9, 1, 1)
@@ -275,18 +275,18 @@ export function drawCharacter(
       p(look.shirt, 7, 8, 2, 1)
       p(look.skin, 9, 8 - fast, 1, 1)
       break
-    case 'typeStand': // 스탠딩 데스크: 서서 높은 키보드를 친다
+    case 'typeStand': // standing desk: typing on a high keyboard
       p(look.shirt, 7, 7, 2, 1)
       p(look.skin, 9, 6 - fast, 1, 1)
       break
-    case 'lapType': // 빈백: 무릎 위 노트북
+    case 'lapType': // beanbag: laptop on the lap
       p(look.shirt, 7, 8, 1, 1)
       p(look.skin, 7, 9 - fast, 1, 1)
       p('#5a6070', 6, 10, 4, 1)
       p('#5a6070', 10, 7, 1, 3)
       p(fast ? '#bfe9ff' : '#9fd8f5', 9, 7, 1, 3)
       break
-    case 'run': // 러닝머신: 팔을 번갈아 흔든다
+    case 'run': // treadmill: arms swing alternately
       if (fast) {
         p(look.shirt, 7, 6, 1, 2)
         p(look.skin, 8, 7, 1, 1)
@@ -300,7 +300,7 @@ export function drawCharacter(
       }
       break
     case 'lift': {
-      // 아령: 내렸다가 머리 위로 들어 올리기를 반복
+      // Dumbbell: lower, then lift overhead, repeatedly
       const up = Math.floor(now / 520) % 2 === 1
       const bar = '#2c303a'
       if (up) {
@@ -318,14 +318,14 @@ export function drawCharacter(
       }
       break
     }
-    case 'talk': // 수다: 말하면서 손짓
+    case 'talk': // chat: gesturing while talking
       armDown(0)
       p(look.shirt, 7, 6, 1, 2)
       p(look.skin, 8, 7 - slow, 1, 1)
       break
     case 'standType':
       p(look.shirt, 7, 8, 2, 1)
-      p('#2c303a', 9, 6, 1, 3) // 태블릿
+      p('#2c303a', 9, 6, 1, 3) // tablet
       p(fast ? '#bfe9ff' : '#8fd0f0', 8, 7, 1, 1)
       break
     case 'wave':
@@ -343,11 +343,11 @@ export function drawCharacter(
     case 'trouble':
       armDown(0)
       p(look.shirt, 7, 2, 1, 5)
-      p(look.skin, 6 - slow, 1, 1, 1) // 머리 긁적이는 손
+      p(look.skin, 6 - slow, 1, 1, 1) // hand scratching the head
       break
     case 'drink': {
       armDown(0)
-      // 4초에 한 번, 1초 동안 컵을 입으로 가져간다
+      // Raise the cup to the mouth for 1 second every 4 seconds
       const sipping = now % 4000 < 1000
       p(look.shirt, 7, 6, 1, 2)
       if (sipping) {
@@ -368,15 +368,15 @@ export function drawCharacter(
 const BUBBLE_W = 11
 const BUBBLE_H = 9
 
-// 7x5 아이콘. '#'이 칠해지는 픽셀
-// bg/border가 있으면 흰 말풍선 대신 그 색으로 칠해 눈에 띄게 한다
+// 7x5 icons; '#' marks a filled pixel.
+// bg/border, when set, replace the white bubble colors so the icon stands out
 const ICONS: Record<Exclude<BubbleKind, 'dots'>, { color: string; rows: string[]; bg?: string; border?: string }> = {
   bang: { color: '#e0453a', rows: ['...#...', '...#...', '...#...', '.......', '...#...'] },
   check: { color: '#ffffff', bg: '#2fb35a', border: '#145c2c', rows: ['......#', '.....#.', '#...#..', '.#.#...', '..#....'] },
   fail: { color: '#e0453a', rows: ['.#...#.', '..#.#..', '...#...', '..#.#..', '.#...#.'] },
   pause: { color: '#7a7f8a', rows: ['..#.#..', '..#.#..', '..#.#..', '..#.#..', '..#.#..'] },
   talk: { color: '#6a7080', rows: ['.##.###', '.......', '.#####.', '.......', '.###.#.'] },
-  // 작업 중 사용하는 도구
+  // Tools used while working
   terminal: { color: '#3a4050', rows: ['.#.....', '..#....', '.#.....', '....###', '.......'] },
   edit: { color: '#c9862a', rows: ['.....##', '....##.', '...##..', '.###...', '.#.....'] },
   read: { color: '#3f7fb0', rows: ['.#####.', '.#...#.', '.#.#.#.', '.#...#.', '.#####.'] },
@@ -385,7 +385,7 @@ const ICONS: Record<Exclude<BubbleKind, 'dots'>, { color: string; rows: string[]
   agent: { color: '#d97757', rows: ['...#...', '..###..', '...#...', '..###..', '..#.#..'] },
 }
 
-/** 캐릭터 머리 위 말풍선. (x, headTop)은 캐릭터 왼쪽 끝과 머리 꼭대기 */
+/** Speech bubble above a character. (x, headTop) is the character's left edge and top of the head */
 export function drawBubble(ctx: Ctx, x: number, headTop: number, kind: BubbleKind, sceneWidth: number, now: number): void {
   const bx = Math.max(0, Math.min(sceneWidth - BUBBLE_W, x - 1))
   const by = Math.max(0, headTop - BUBBLE_H - 2)
@@ -405,7 +405,7 @@ export function drawBubble(ctx: Ctx, x: number, headTop: number, kind: BubbleKin
   const ix = bx + 2
   const iy = by + 2
   if (!icon) {
-    // 점 세 개가 차례로 튀어 오른다
+    // Three dots hop in turn
     const active = Math.floor(now / 220) % 4
     ctx.fillStyle = '#4a5060'
     for (let i = 0; i < 3; i++) ctx.fillRect(ix + 1 + i * 2, iy + (i === active ? 1 : 3), 1, 1)

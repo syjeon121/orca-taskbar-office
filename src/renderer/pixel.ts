@@ -1,4 +1,4 @@
-// 픽셀아트용 공통 도구: 작은 오프스크린 캔버스, 자동 외곽선, 색 밝기 조절.
+// Shared pixel-art helpers: small offscreen canvases, automatic outlines and color shading.
 
 export interface Surface {
   canvas: HTMLCanvasElement
@@ -9,20 +9,20 @@ export function makeSurface(width: number, height: number): Surface {
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, width)
   canvas.height = Math.max(1, height)
-  // 외곽선을 만들 때마다 픽셀을 읽으므로 읽기에 유리한 방식으로 만든다
+  // Pixels are read back for every outline, so optimize the context for reads
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!
   return { canvas, ctx }
 }
 
 export type Rgb = [number, number, number]
 
-/** 어두운 외곽선 색. 밝은 배경과 어두운 배경 어디서나 그림이 묻히지 않게 한다 */
+/** Dark outline color that keeps sprites readable on both light and dark backgrounds */
 export const OUTLINE: Rgb = [38, 32, 44]
 export const OUTLINE_HOVER: Rgb = [255, 224, 102]
 
 /**
- * 그려진 픽셀에 맞닿은 빈 픽셀을 외곽선 색으로 채운다.
- * limitY 아래(바닥)에는 외곽선을 넣지 않는다.
+ * Fills empty pixels that touch drawn pixels with the outline color.
+ * No outline is added below limitY (the floor).
  */
 export function addOutline(surface: Surface, color: Rgb = OUTLINE, limitY = surface.canvas.height): void {
   const { width, height } = surface.canvas
@@ -47,7 +47,7 @@ export function addOutline(surface: Surface, color: Rgb = OUTLINE, limitY = surf
   surface.ctx.putImageData(image, 0, 0)
 }
 
-/** 두 '#rrggbb' 색을 섞는다. t가 0이면 a, 1이면 b */
+/** Mixes two '#rrggbb' colors. t = 0 gives a, t = 1 gives b */
 export function mix(a: string, b: string, t: number): string {
   const x = parseInt(a.slice(1), 16)
   const y = parseInt(b.slice(1), 16)
@@ -59,7 +59,7 @@ export function mix(a: string, b: string, t: number): string {
   return `#${((channel(16) << 16) | (channel(8) << 8) | channel(0)).toString(16).padStart(6, '0')}`
 }
 
-/** '#rrggbb' 색을 밝게(amount > 0) 또는 어둡게(amount < 0) 한다. amount는 -1~1 */
+/** Lightens (amount > 0) or darkens (amount < 0) a '#rrggbb' color. amount is -1 to 1 */
 export function shade(hex: string, amount: number): string {
   return mix(hex, amount > 0 ? '#ffffff' : '#000000', Math.abs(amount))
 }

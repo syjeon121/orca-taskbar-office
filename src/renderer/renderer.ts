@@ -13,7 +13,7 @@ type Edge = 'left' | 'right'
 const canvas = document.getElementById('scene') as HTMLCanvasElement
 const ctx = canvas.getContext('2d')!
 
-/** 띠 양 끝에서 이 거리(CSS 픽셀) 안쪽이 폭 조절 손잡이 */
+/** Width (CSS pixels) of the resize handle at each end of the strip */
 const EDGE_ZONE = 8
 
 let layout: Layout = { scale: 4, sceneWidth: 480, sceneHeight: 35 }
@@ -26,7 +26,7 @@ function setLayout(next: Layout): void {
   office.setGeometry(computeGeometry(next))
 }
 
-// 캐릭터가 움직이므로 커서가 가만히 있어도 매 프레임 다시 판정한다
+// Characters move, so re-test the hover every frame even if the cursor is still
 let cursor: { x: number; y: number } | null = null
 let hoveredEdge: Edge | null = null
 let draggingEdge: Edge | null = null
@@ -40,7 +40,7 @@ function edgeAt(x: number): Edge | null {
 
 function refreshHover(): void {
   const id = cursor && !draggingEdge ? office.hitTest(cursor.x / layout.scale, cursor.y / layout.scale) : null
-  // 캐릭터가 끝에 서 있으면 캐릭터가 우선
+  // A character standing at an edge takes priority over the handle
   hoveredEdge = cursor && !id ? edgeAt(cursor.x) : null
 
   if (id !== office.hoveredId) {
@@ -49,7 +49,7 @@ function refreshHover(): void {
     window.office.hover(id && x !== null ? { id, x, scale: layout.scale } : null)
   }
   document.body.style.cursor = draggingEdge || hoveredEdge ? 'ew-resize' : id ? 'pointer' : 'default'
-  // 캐릭터나 손잡이 위에서만 클릭을 받고, 그 밖에서는 뒤 창으로 통과시킨다
+  // Accept clicks only over characters or handles; let everything else through to the windows behind
   const wanted = id !== null || hoveredEdge !== null || draggingEdge !== null
   if (wanted !== interactive) {
     interactive = wanted
@@ -69,7 +69,7 @@ canvas.addEventListener('pointerdown', (event) => {
   const edge = office.hoveredId ? null : edgeAt(event.clientX)
   if (!edge) return
   draggingEdge = edge
-  // 커서가 창 밖으로 나가도 드래그가 끝날 때까지 이벤트를 계속 받는다
+  // Keep receiving events until the drag ends, even if the cursor leaves the window
   canvas.setPointerCapture(event.pointerId)
 })
 canvas.addEventListener('pointermove', () => {
@@ -85,12 +85,12 @@ canvas.addEventListener('pointercancel', endDrag)
 
 window.addEventListener('click', () => {
   if (!office.hoveredId) return
-  // 클릭하면 결과를 확인한 것으로 보고 표시를 내린다
+  // A click counts as acknowledging the result and clears the mark
   office.acknowledge(office.hoveredId)
   window.office.characterClicked(office.hoveredId)
 })
 
-/** 폭 조절 손잡이: 커서가 끝에 오거나 드래그 중일 때만 보인다 */
+/** Resize handle: only visible while the cursor is at an edge or dragging */
 function drawEdgeGrip(): void {
   const edge = draggingEdge ?? hoveredEdge
   if (!edge) return

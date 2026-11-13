@@ -7,13 +7,13 @@ import { applySource, onSourceStatus } from './source'
 import { createTray, refreshTrayMenu, setTrayStatus } from './tray'
 import { applyLayout, createWindow, registerWindowIpc } from './window'
 
-// 설치본(제품 이름 "Taskbar Office")과 개발 실행이 같은 설정 폴더(%APPDATA%\orca-taskbar-office)를 쓰게 한다
+// The installed app (product name "Taskbar Office") and dev runs share one settings folder (%APPDATA%\orca-taskbar-office)
 app.setName('orca-taskbar-office')
 
-// TASKBAR_OFFICE_SNAPSHOT=<png 경로>: 시작 몇 초 뒤(TASKBAR_OFFICE_SNAPSHOT_DELAY, 기본 7000ms) 장면 캔버스를 PNG로 저장한다.
-// 화면을 직접 볼 수 없을 때(잠금 화면, 원격 작업) 그림을 확인하기 위한 개발용 기능.
+// TASKBAR_OFFICE_SNAPSHOT=<png path>: saves the scene canvas as a PNG a few seconds after start
+// (TASKBAR_OFFICE_SNAPSHOT_DELAY, default 7000 ms). A dev aid for when you can't see the screen (locked, remote).
 const snapshotPath = process.env.TASKBAR_OFFICE_SNAPSHOT
-// 창이 가려져 있어도 계속 그리게 한다
+// Keep rendering even when the window is covered
 if (snapshotPath) app.commandLine.appendSwitch('disable-features', 'CalcNativeWinOcclusion')
 
 if (!app.requestSingleInstanceLock()) {
@@ -36,13 +36,13 @@ if (!app.requestSingleInstanceLock()) {
     ipcMain.on('character-clicked', (_event, id: string) => {
       const session = findSession(id)
       hideTooltip()
-      // 데모 세션은 연결된 워크스페이스가 없다
+      // Demo sessions have no workspace
       if (session?.worktreeId) void openInOrca(session.worktreeId, session.environmentId)
     })
     onSourceStatus(setTrayStatus)
     applySource()
 
-    // 모니터 연결/분리, 해상도·배율 변경, 작업표시줄 크기 변경 시 다시 배치
+    // Re-place the strip when monitors, resolution, DPI scale or the taskbar size change
     const onDisplaysChanged = (): void => {
       applyLayout()
       refreshTrayMenu()
@@ -52,6 +52,6 @@ if (!app.requestSingleInstanceLock()) {
     screen.on('display-metrics-changed', onDisplaysChanged)
   })
 
-  // 창이 닫혀도 트레이에 남는다. 종료는 트레이 메뉴에서만.
+  // Stay in the tray when windows close. Quitting is only done from the tray menu.
   app.on('window-all-closed', () => {})
 }

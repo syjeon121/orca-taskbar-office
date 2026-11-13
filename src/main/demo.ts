@@ -1,7 +1,7 @@
 import type { SessionInfo, SessionStatus } from '../shared/types'
 import { publishSessions } from './session-hub'
 
-// 가짜 세션 공급원. Orca 없이 장면과 애니메이션을 확인할 때 쓴다 (트레이의 "데모 모드").
+// Fake session source for checking the scene and animations without Orca ("Demo mode" in the tray).
 
 const AGENT_TYPES = ['claude', 'codex', 'antigravity']
 const WORKSPACES = ['web-app', 'api-server', 'docs-site', 'orca-taskbar-office']
@@ -55,21 +55,21 @@ export const demo = {
     addSession()
     publish()
   },
-  /** 쉬는 세션 하나를 작업 시작 상태로 */
+  /** Moves one resting session to working */
   start(): void {
     const candidates = withStatus(...RESTING, 'waiting')
     if (candidates.length === 0) return
     setStatus(pick(candidates), 'working')
     publish()
   },
-  /** 작업 중인 세션 하나를 주어진 상태로 */
+  /** Moves one working session to the given status */
   finish(status: Exclude<SessionStatus, 'working'>): void {
     const candidates = withStatus('working', ...(status === 'waiting' ? [] : (['waiting'] as SessionStatus[])))
     if (candidates.length === 0) return
     setStatus(pick(candidates), status)
     publish()
   },
-  /** 쉬는 세션 하나를 목록에서 제거 (퇴근) */
+  /** Removes one resting session from the list (it goes home) */
   remove(): void {
     const candidates = withStatus(...RESTING)
     if (candidates.length === 0) return
@@ -90,7 +90,7 @@ function autoStep(): void {
   const resting = withStatus(...RESTING).length
   const busy = withStatus('working', 'waiting').length
   const roll = Math.random()
-  // 응답 대기는 오래 쌓이지 않게 절반 확률로 먼저 풀어준다
+  // Resolve waiting sessions first half of the time so they don't pile up
   const waiting = withStatus('waiting')
   if (waiting.length > 0 && Math.random() < 0.5) {
     setStatus(pick(waiting), 'working')
@@ -108,16 +108,25 @@ function autoStep(): void {
 
 export function startDemo(): void {
   sessions = []
-  // TASKBAR_OFFICE_DEMO=busy: 12명이 모두 작업 중인 상태로 고정한다. 자리별 자세를 한눈에 확인하는 용도
+  // TASKBAR_OFFICE_DEMO=busy: 12 sessions, all working. Shows every desk pose at once
   if (process.env.TASKBAR_OFFICE_DEMO === 'busy') {
     for (let i = 0; i < 12; i++) addSession()
     for (const s of sessions) setStatus(s, 'working')
     publish()
     return
   }
-  // TASKBAR_OFFICE_DEMO=idle: 10명이 모두 쉬는 상태로 고정한다. 라운지 동작을 확인하는 용도
+  // TASKBAR_OFFICE_DEMO=idle: 10 sessions, all resting. Shows the lounge activities
   if (process.env.TASKBAR_OFFICE_DEMO === 'idle') {
     for (let i = 0; i < 10; i++) addSession()
+    publish()
+    return
+  }
+  // TASKBAR_OFFICE_DEMO=showcase: a fixed mix of every state, used for README screenshots
+  if (process.env.TASKBAR_OFFICE_DEMO === 'showcase') {
+    for (let i = 0; i < 12; i++) addSession()
+    sessions.slice(0, 5).forEach((s) => setStatus(s, 'working'))
+    setStatus(sessions[5], 'waiting')
+    for (const s of sessions.slice(6, 8)) s.unread = true
     publish()
     return
   }

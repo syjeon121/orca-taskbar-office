@@ -65,8 +65,8 @@ function render({ session, now }: TooltipData): void {
   const hint = el('hint')
   hint.textContent = session.worktreeId ? '클릭하면 Orca에서 이 워크스페이스를 엽니다' : ''
   hint.style.display = session.worktreeId ? '' : 'none'
-  // 내용이 반영된 실제 높이를 알려 창 크기를 맞춘다.
-  // 창이 숨겨져 있으면 requestAnimationFrame이 돌지 않으므로, 바로 레이아웃을 계산해 보고한다.
+  // Report the rendered height so the window can be sized to fit.
+  // requestAnimationFrame doesn't run while the window is hidden, so force layout and report right away.
   window.tooltip.reportHeight(el('card').getBoundingClientRect().height)
 }
 

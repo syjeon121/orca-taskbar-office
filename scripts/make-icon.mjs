@@ -1,5 +1,5 @@
-// 설치 파일과 실행 파일에 쓸 build/icon.ico를 만든다.
-// 트레이 아이콘과 같은 16x16 픽셀 그림을 16배 확대한 256x256 PNG를 ICO 컨테이너에 담는다.
+// Generates build/icon.ico for the installer and executable.
+// Scales the same 16x16 pixel art as the tray icon by 16x into a 256x256 PNG inside an ICO container.
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { deflateSync } from 'node:zlib'
 
@@ -7,7 +7,7 @@ const { pixels, palette } = JSON.parse(await readFile('assets/icon-pixels.json',
 const SCALE = 16
 const size = pixels.length * SCALE
 
-// PNG는 줄마다 필터 바이트(0) 하나와 RGBA 픽셀이 이어진다
+// Each PNG row is one filter byte (0) followed by RGBA pixels
 const raw = Buffer.alloc(size * (size * 4 + 1))
 for (let y = 0; y < size; y++) {
   const row = y * (size * 4 + 1)
@@ -44,7 +44,7 @@ function chunk(type, data) {
 const header = Buffer.alloc(13)
 header.writeUInt32BE(size, 0)
 header.writeUInt32BE(size, 4)
-header[8] = 8 // 채널당 8비트
+header[8] = 8 // 8 bits per channel
 header[9] = 6 // RGBA
 const png = Buffer.concat([
   Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
@@ -53,7 +53,7 @@ const png = Buffer.concat([
   chunk('IEND', Buffer.alloc(0)),
 ])
 
-// ICO: 6바이트 헤더 + 16바이트 항목 하나 + PNG 데이터. 폭/높이 0은 256을 뜻한다
+// ICO: 6-byte header + one 16-byte entry + PNG data. A width/height of 0 means 256
 const ico = Buffer.alloc(22)
 ico.writeUInt16LE(1, 2)
 ico.writeUInt16LE(1, 4)

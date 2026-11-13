@@ -1,85 +1,85 @@
-/** 장면의 논리 높이(확대 전 픽셀). 창 높이 = SCENE_HEIGHT * scale */
+/** Logical scene height in unscaled pixels. Window height = SCENE_HEIGHT * scale */
 export const SCENE_HEIGHT = 35
 
 export const MIN_SCALE = 2
 export const MAX_SCALE = 6
 
-/** custom은 띠 끝을 드래그해 직접 정한 위치 (leftFraction 사용) */
+/** custom is a position set by dragging the strip edges (uses leftFraction) */
 export type Align = 'left' | 'center' | 'right' | 'custom'
 
-/** 드래그로 줄일 수 있는 최소 폭 (작업 영역 폭 대비) */
+/** Minimum width reachable by dragging (fraction of the work area width) */
 export const MIN_WIDTH_FRACTION = 0.2
 
 export interface Settings {
-  /** 픽셀 확대 배율 (정수) */
+  /** Pixel scale factor (integer) */
   scale: number
-  /** 모니터 작업 영역 폭 대비 띠의 폭 (0~1) */
+  /** Strip width as a fraction of the monitor work area (0-1) */
   widthFraction: number
   align: Align
-  /** align이 custom일 때 띠 왼쪽 끝의 위치 (작업 영역 폭 대비 0~1) */
+  /** Left edge of the strip when align is custom (fraction of the work area width, 0-1) */
   leftFraction: number
-  /** 끝난 세션을 퇴근시키기까지의 시간(분). 0이면 퇴근시키지 않는다 */
+  /** Minutes before a finished session goes home. 0 means never */
   retireMinutes: number
-  /** 쉬는 세션까지 포함해 화면에 둘 최대 인원. 일하거나 확인을 기다리는 세션은 이 수를 넘어도 표시한다 */
+  /** Maximum characters on screen, resting ones included. Busy and unread sessions are shown even beyond this */
   maxCharacters: number
-  /** 띠를 띄울 모니터 id. null이면 주 모니터 */
+  /** Monitor id to show the strip on. null means the primary monitor */
   displayId: number | null
   visible: boolean
-  /** true면 Orca 대신 가짜 세션으로 장면을 움직인다 */
+  /** When true, drive the scene with fake sessions instead of Orca */
   demoMode: boolean
-  /** 사무실에 표시하지 않을 원격 Orca 환경의 id */
+  /** Ids of remote Orca environments to hide from the office */
   disabledEnvironments: string[]
 }
 
-/** 메인 → 렌더러: 현재 창 크기에 맞는 장면 크기 */
+/** Main → renderer: scene size for the current window size */
 export interface Layout {
   scale: number
-  /** 확대 전 장면 폭(픽셀) */
+  /** Scene width in unscaled pixels */
   sceneWidth: number
   sceneHeight: number
 }
 
 /**
- * 캐릭터 한 명이 되는 에이전트 세션의 상태.
- * - working: 작업 중
- * - waiting: 사용자 응답 대기 (권한 요청, 질문)
- * - done / failed / interrupted: 끝남. 끝난 직후의 연출은 렌더러가 상태 변화를 보고 판단한다.
+ * Status of an agent session (one session = one character).
+ * - working: working
+ * - waiting: waiting for the user (permission request, question)
+ * - done / failed / interrupted: finished. The renderer decides the finishing animation from the status change.
  */
 export type SessionStatus = 'working' | 'waiting' | 'done' | 'failed' | 'interrupted'
 
 export interface SessionInfo {
   id: string
-  /** claude, codex, antigravity 등 */
+  /** claude, codex, antigravity, ... */
   agentType: string
   workspace: string
-  /** 클릭 시 Orca에서 열 워크스페이스. 데모 세션은 null */
+  /** Workspace to open in Orca on click. null for demo sessions */
   worktreeId: string | null
-  /** 세션이 있는 원격 Orca 환경의 id. 이 PC의 세션은 null */
+  /** Id of the remote Orca environment the session lives in. null for sessions on this PC */
   environmentId: string | null
-  /** 원격 환경의 이름. 이 PC의 세션은 빈 문자열 */
+  /** Name of the remote environment. Empty for sessions on this PC */
   host: string
   title: string
   status: SessionStatus
-  /** true면 끝났을 때 만세나 결과 표시 없이 조용히 라운지로 간다 (대체되었거나 결과가 불확실한 세션) */
+  /** When true, the character goes to the lounge quietly on finish, with no cheer or result mark (superseded or unconfirmed sessions) */
   quiet: boolean
-  /** 끝났지만 사용자가 Orca에서 아직 확인하지 않음. 확인할 때까지 표시를 달고 퇴근하지 않는다 */
+  /** Finished but not yet viewed in Orca. Keeps its mark and doesn't go home until viewed */
   unread: boolean
-  /** 마지막 응답의 첫 줄 */
+  /** First line of the last reply */
   lastMessage: string
-  /** 작업 중 사용하는 도구 이름 */
+  /** Name of the tool in use while working */
   tool: string | null
-  /** 현재 상태가 시작된 시각 (epoch ms) */
+  /** When the current status started (epoch ms) */
   since: number
 }
 
-/** 렌더러 → 메인: 커서가 올라간 캐릭터. x는 캐릭터 가운데의 장면 좌표 */
+/** Renderer → main: the hovered character. x is the scene coordinate of its center */
 export interface HoverTarget {
   id: string
   x: number
   scale: number
 }
 
-/** 메인 → 툴팁 창 */
+/** Main → tooltip window */
 export interface TooltipData {
   session: SessionInfo
   now: number
@@ -90,7 +90,7 @@ export interface TooltipApi {
   reportHeight(height: number): void
 }
 
-/** 에이전트 종류별 대표 색. 툴팁 배지에 쓴다 */
+/** Color per agent type, used for the tooltip badge */
 export const AGENT_COLORS: Record<string, string> = {
   claude: '#d97757',
   codex: '#3fa58e',
@@ -99,18 +99,18 @@ export const AGENT_COLORS: Record<string, string> = {
 }
 
 export interface OfficeApi {
-  /** 커서가 올라간 캐릭터가 바뀔 때 알림. 벗어나면 null */
+  /** Reports when the hovered character changes. null when the cursor leaves */
   hover(target: HoverTarget | null): void
   getLayout(): Promise<Layout>
   onLayout(callback: (layout: Layout) => void): void
-  /** 현재 세션 목록 전체. 목록에서 빠진 세션의 캐릭터는 퇴근한다 */
+  /** The full current session list. Characters whose session is missing go home */
   getSessions(): Promise<SessionInfo[]>
   onSessions(callback: (sessions: SessionInfo[]) => void): void
-  /** 커서가 클릭 가능한 대상 위에 있는지 알림. false면 창이 클릭을 통과시킴 */
+  /** Reports whether the cursor is over something clickable. When false the window lets clicks through */
   setInteractive(interactive: boolean): void
-  /** 띠의 왼쪽 또는 오른쪽 끝을 드래그하는 중. 메인이 현재 커서 위치로 창 크기를 바꾼다 */
+  /** A strip edge is being dragged. The main process resizes the window to the current cursor position */
   resizeDrag(edge: 'left' | 'right'): void
-  /** 드래그가 끝남. 현재 크기와 위치를 설정에 저장한다 */
+  /** Drag finished. Saves the current size and position to settings */
   resizeEnd(): void
   characterClicked(id: string): void
 }

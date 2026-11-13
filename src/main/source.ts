@@ -2,7 +2,7 @@ import { startDemo, stopDemo } from './demo'
 import { startPoller, stopPoller, type PollerStatus } from './orca-poller'
 import { getSettings } from './settings'
 
-// 세션 공급원(Orca 폴러 / 데모)을 설정에 맞게 켜고 끈다.
+// Starts and stops the session source (Orca poller or demo) according to the settings.
 
 let statusListener: (text: string) => void = () => {}
 

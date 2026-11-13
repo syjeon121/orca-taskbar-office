@@ -4,7 +4,7 @@ import type { HoverTarget, TooltipData } from '../shared/types'
 import { findSession, onSessionsChanged } from './session-hub'
 import { getStripBounds } from './window'
 
-// 캐릭터 위에 뜨는 정보 툴팁. 띠 창은 높이가 낮아 글자를 담을 수 없으므로 별도의 작은 창을 띠 위에 띄운다.
+// Info tooltip above a character. The strip window is too short to hold text, so a separate small window floats above it.
 
 const WIDTH = 340
 const GAP = 6
@@ -29,7 +29,7 @@ export function createTooltip(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      // 숨겨진 동안에도 내용 갱신과 크기 계산이 멈추지 않게 한다
+      // Keep updating content and measuring size while hidden
       backgroundThrottling: false,
     },
   })
@@ -40,7 +40,7 @@ export function createTooltip(): void {
     tip = null
   })
 
-  // 툴팁이 내용을 그린 뒤 실제 높이를 알려오면 그 크기로 캐릭터 위에 배치한다
+  // Once the tooltip reports its rendered height, place it above the character at that size
   ipcMain.on('tooltip-height', (_event, height: number) => {
     const strip = getStripBounds()
     if (!tip || !hover || !strip) return

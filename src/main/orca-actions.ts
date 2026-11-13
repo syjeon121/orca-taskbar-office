@@ -1,11 +1,11 @@
 import { execFile } from 'node:child_process'
 import { callOrca } from './orca-cli'
 
-// 캐릭터 클릭 시: Orca에서 그 세션의 워크스페이스를 열고 Orca 창을 앞으로 가져온다.
-// Orca CLI에는 채팅 세션 탭을 직접 여는 명령이 없어 워크스페이스까지만 이동한다 (docs/PLAN.md 4장).
+// On character click: open the session's workspace in Orca and bring the Orca window to the front.
+// The Orca CLI has no command to open a chat session tab, so this only goes as far as the workspace.
 
-// Windows는 다른 프로세스의 창을 앞으로 가져오는 것을 제한한다.
-// Alt 키 입력을 한 번 흉내 내면 제한이 풀리는 것을 이용한다.
+// Windows restricts bringing another process's window to the front.
+// Simulating a single Alt key press lifts that restriction.
 const FOCUS_SCRIPT = `
 Add-Type @'
 using System; using System.Runtime.InteropServices;
@@ -37,17 +37,17 @@ function focusOrcaWindow(): Promise<void> {
   })
 }
 
-/** 이 PC의 워크스페이스: `worktree activate`가 Orca 화면을 바로 전환한다 */
+/** Workspace on this PC: `worktree activate` switches the Orca view directly */
 async function openLocal(worktreeId: string): Promise<void> {
   await callOrca(['worktree', 'activate', '--worktree', `id:${worktreeId}`, '--json'])
 }
 
 /**
- * 원격 환경의 워크스페이스.
- * `worktree activate --environment`는 성공을 반환하지만 이 PC의 Orca 화면을 바꾸지 않는다.
- * 화면을 원격 쪽으로 옮기는 명령은 `terminal switch --environment`뿐이라,
- * 그 워크스페이스에 임시 터미널을 만들고 → 그 터미널로 전환해 화면을 옮긴 뒤 → 터미널을 닫는다.
- * 터미널을 닫아도 화면은 그 워크스페이스에 남는다 (2026-11-12, Orca 1.4.255에서 확인).
+ * Workspace in a remote environment.
+ * `worktree activate --environment` reports success but doesn't change the Orca view on this PC.
+ * The only command that moves the view to a remote workspace is `terminal switch --environment`, so we
+ * create a temporary terminal there, switch to it to move the view, then close the terminal.
+ * The view stays on that workspace after the terminal closes (verified with Orca 1.4.255).
  */
 async function openRemote(worktreeId: string, environmentId: string): Promise<void> {
   const env = ['--environment', environmentId]
@@ -55,24 +55,24 @@ async function openRemote(worktreeId: string, environmentId: string): Promise<vo
     await callOrca(['terminal', 'create', '--worktree', `id:${worktreeId}`, '--title', 'Taskbar Office', '--json', ...env], 20000),
   ) as { result?: { terminal?: { handle?: string } } }
   const handle = created.result?.terminal?.handle
-  if (!handle) throw new Error('임시 터미널을 만들지 못했습니다')
+  if (!handle) throw new Error('Failed to create the temporary terminal')
   try {
     await callOrca(['terminal', 'switch', '--terminal', handle, '--json', ...env])
   } finally {
-    // 전환에 실패해도 임시 터미널은 남기지 않는다
+    // Don't leave the temporary terminal behind even if switching fails
     await callOrca(['terminal', 'close', '--terminal', handle, '--json', ...env]).catch((error) =>
-      console.error('임시 터미널 닫기 실패:', handle, error),
+      console.error('Failed to close the temporary terminal:', handle, error),
     )
   }
 }
 
 export async function openInOrca(worktreeId: string, environmentId: string | null): Promise<void> {
-  // 창을 앞으로 가져오는 일과 워크스페이스 전환을 동시에 시작해 반응을 빠르게 한다
+  // Raise the window and switch the workspace in parallel to feel snappier
   const results = await Promise.allSettled([
     focusOrcaWindow(),
     environmentId ? openRemote(worktreeId, environmentId) : openLocal(worktreeId),
   ])
   for (const result of results) {
-    if (result.status === 'rejected') console.error('Orca로 이동 실패:', result.reason)
+    if (result.status === 'rejected') console.error('Failed to open in Orca:', result.reason)
   }
 }

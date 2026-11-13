@@ -1,7 +1,7 @@
 import { nativeImage, type NativeImage } from 'electron'
 import icon from '../../assets/icon-pixels.json'
 
-// 16x16 트레이 아이콘: 책상에 앉은 사람. 픽셀 데이터는 설치 파일 아이콘(scripts/make-icon.mjs)과 함께 쓴다.
+// 16x16 tray icon: a person at a desk. The pixel data is shared with the installer icon (scripts/make-icon.mjs).
 
 const PALETTE = icon.palette as Record<string, number[]>
 
@@ -13,7 +13,7 @@ function render(pixelSize: number): Buffer {
       const color = PALETTE[icon.pixels[Math.floor(y / pixelSize)][Math.floor(x / pixelSize)]]
       if (!color) continue
       const i = (y * size + x) * 4
-      // BGRA 순서
+      // BGRA order
       buf[i] = color[2]
       buf[i + 1] = color[1]
       buf[i + 2] = color[0]

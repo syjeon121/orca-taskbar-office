@@ -1,4 +1,5 @@
 import type { Layout, OfficeApi } from '../shared/types'
+import { drawLabels } from './labels'
 import { Office } from './office'
 import { computeGeometry } from './scene'
 
@@ -12,11 +13,13 @@ type Edge = 'left' | 'right'
 
 const canvas = document.getElementById('scene') as HTMLCanvasElement
 const ctx = canvas.getContext('2d')!
+const labelCanvas = document.getElementById('labels') as HTMLCanvasElement
+const labelCtx = labelCanvas.getContext('2d')!
 
 /** Width (CSS pixels) of the resize handle at each end of the strip */
 const EDGE_ZONE = 8
 
-let layout: Layout = { scale: 4, sceneWidth: 480, sceneHeight: 35 }
+let layout: Layout = { scale: 4, sceneWidth: 480, sceneHeight: 45, labelLane: 10 }
 const office = new Office(computeGeometry(layout))
 
 function setLayout(next: Layout): void {
@@ -24,6 +27,26 @@ function setLayout(next: Layout): void {
   canvas.width = next.sceneWidth
   canvas.height = next.sceneHeight
   office.setGeometry(computeGeometry(next))
+  labelKey = ''
+}
+
+/** What the label layer last drew. Labels are redrawn only when this changes */
+let labelKey = ''
+
+function drawLabelLayer(): void {
+  const anchors = layout.labelLane > 0 ? office.labelAnchors() : []
+  // Size the label canvas in device pixels so text is sharp at any Windows display scaling
+  const dpr = window.devicePixelRatio || 1
+  const key = JSON.stringify([anchors, office.hoveredId, layout, dpr])
+  if (key === labelKey) return
+  labelKey = key
+  const cssW = layout.sceneWidth * layout.scale
+  const cssH = layout.sceneHeight * layout.scale
+  labelCanvas.width = Math.round(cssW * dpr)
+  labelCanvas.height = Math.round(cssH * dpr)
+  labelCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  labelCtx.clearRect(0, 0, cssW, cssH)
+  if (anchors.length > 0) drawLabels(labelCtx, anchors, layout, office.hoveredId)
 }
 
 // Characters move, so re-test the hover every frame even if the cursor is still
@@ -108,6 +131,7 @@ function frame(now: number): void {
   refreshHover()
   office.draw(ctx, now)
   drawEdgeGrip()
+  drawLabelLayer()
   requestAnimationFrame(frame)
 }
 
@@ -117,6 +141,18 @@ async function start(): Promise<void> {
   setLayout(await window.office.getLayout())
   office.setSessions(await window.office.getSessions(), performance.now())
   requestAnimationFrame(frame)
+}
+
+/** TASKBAR_OFFICE_SNAPSHOT: the scene with its labels, at window resolution */
+;(window as unknown as { snapshot: () => string }).snapshot = () => {
+  const out = document.createElement('canvas')
+  out.width = labelCanvas.width
+  out.height = labelCanvas.height
+  const o = out.getContext('2d')!
+  o.imageSmoothingEnabled = false
+  o.drawImage(canvas, 0, 0, out.width, out.height)
+  o.drawImage(labelCanvas, 0, 0)
+  return out.toDataURL('image/png')
 }
 
 void start()

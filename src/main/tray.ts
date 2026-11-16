@@ -1,6 +1,6 @@
 import { app, Menu, screen, Tray, type MenuItemConstructorOptions } from 'electron'
 import { LANGUAGES, strings, type Strings } from '../shared/i18n'
-import { MAX_SCALE, MIN_SCALE, SCENE_HEIGHT, type Align, type Settings } from '../shared/types'
+import { MAX_SCALE, MIN_SCALE, sceneHeight, type Align, type Settings } from '../shared/types'
 import { demo } from './demo'
 import { createTrayIcon } from './icon'
 import { getEnvironments } from './orca-poller'
@@ -74,7 +74,7 @@ export function refreshTrayMenu(): void {
   const scales: MenuItemConstructorOptions[] = []
   for (let s = MIN_SCALE; s <= MAX_SCALE; s++) {
     scales.push({
-      label: t.scaleOption(s, SCENE_HEIGHT * s),
+      label: t.scaleOption(s, sceneHeight(settings.workLabels) * s),
       type: 'radio',
       checked: settings.scale === s,
       click: () => change({ scale: s }),
@@ -130,6 +130,7 @@ export function refreshTrayMenu(): void {
           click: () => change({ maxCharacters: n }),
         })),
       },
+      { label: t.workLabels, type: 'checkbox', checked: settings.workLabels, click: (item) => change({ workLabels: item.checked }) },
       {
         label: t.launchAtStartup,
         type: 'checkbox',

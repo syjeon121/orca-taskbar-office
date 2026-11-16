@@ -16,6 +16,7 @@ const DEFAULTS: Settings = {
   demoMode: false,
   disabledEnvironments: [],
   language: 'en',
+  workLabels: true,
 }
 
 const ALIGNS: Align[] = ['left', 'center', 'right', 'custom']
@@ -50,6 +51,7 @@ function sanitize(raw: unknown): Settings {
       ? r.disabledEnvironments.filter((id): id is string => typeof id === 'string')
       : [],
     language: LANGUAGES.some((l) => l.value === r.language) ? (r.language as Language) : DEFAULTS.language,
+    workLabels: typeof r.workLabels === 'boolean' ? r.workLabels : DEFAULTS.workLabels,
   }
 }
 

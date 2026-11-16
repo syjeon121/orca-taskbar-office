@@ -27,6 +27,7 @@ export interface Strings {
   goHomeNever: string
   maxCharacters: string
   characterCount: (n: number) => string
+  workLabels: string
   launchAtStartup: string
   remoteEnvironments: string
   language: string
@@ -83,6 +84,7 @@ const en: Strings = {
   goHomeNever: 'Never',
   maxCharacters: 'Max characters',
   characterCount: (n) => `${n}`,
+  workLabels: 'Show current work above characters',
   launchAtStartup: 'Launch at Windows startup',
   remoteEnvironments: 'Remote environments',
   language: 'Language',
@@ -139,6 +141,7 @@ const ko: Strings = {
   goHomeNever: '퇴근시키지 않음',
   maxCharacters: '최대 인원',
   characterCount: (n) => `${n}명`,
+  workLabels: '캐릭터 위에 작업 내용 표시',
   launchAtStartup: 'Windows 시작 시 실행',
   remoteEnvironments: '원격 환경',
   language: '언어 (Language)',

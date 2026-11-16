@@ -19,10 +19,18 @@
         height: 100%;
         image-rendering: pixelated;
       }
+      /* Work labels: sharp text over the pixel scene. Never takes the mouse */
+      #labels {
+        position: absolute;
+        inset: 0;
+        image-rendering: auto;
+        pointer-events: none;
+      }
     </style>
   </head>
   <body>
     <canvas id="scene"></canvas>
+    <canvas id="labels"></canvas>
     <script src="renderer.js"></script>
   </body>
 </html>

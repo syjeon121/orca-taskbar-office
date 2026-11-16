@@ -35,6 +35,7 @@ src/
    ├─ scene.ts             furniture layout
    ├─ scene-art.ts         furniture and floor drawing
    ├─ sprites.ts           characters and speech bubbles
+   ├─ labels.ts            work labels (sharp text layer over the scene)
    ├─ pixel.ts             outlines and color helpers
    └─ tooltip.ts           tooltip content
 assets/icon-pixels.json  icon pixel data
@@ -45,7 +46,7 @@ Furniture order is set by `OFFICE_PATTERN` (office) and `LOUNGE_PATTERN` (lounge
 
 ## Orca data
 
-Sessions come from `orca worktree ps --json`, plus `--environment <id>` for each remote environment. Fields used per agent: `paneKey` (session id), `agentType`, `state`, `mainAgent.outcome`, `interrupted`, `stateStartedAt`, `conversationName`, `lastAssistantMessage`, `toolName` and `activity.unread`.
+Sessions come from `orca worktree ps --json`, plus `--environment <id>` for each remote environment. Fields used per agent: `paneKey` (session id), `agentType`, `state`, `mainAgent.outcome`, `interrupted`, `stateStartedAt`, `conversationName`, `lastAssistantMessage`, `toolName`, `toolInput` (work labels) and `activity.unread`.
 
 | Orca | Character |
 |---|---|

@@ -1,7 +1,14 @@
 import type { Language } from './i18n'
 
-/** Logical scene height in unscaled pixels. Window height = SCENE_HEIGHT * scale */
-export const SCENE_HEIGHT = 35
+/** Height of the office scene in unscaled pixels */
+export const BASE_SCENE_HEIGHT = 35
+/** Height of the work label lane above the scene, in unscaled pixels */
+export const LABEL_LANE_HEIGHT = 10
+
+/** Logical scene height in unscaled pixels, label lane included. Window height = this * scale */
+export function sceneHeight(workLabels: boolean): number {
+  return BASE_SCENE_HEIGHT + (workLabels ? LABEL_LANE_HEIGHT : 0)
+}
 
 export const MIN_SCALE = 2
 export const MAX_SCALE = 6
@@ -33,6 +40,8 @@ export interface Settings {
   disabledEnvironments: string[]
   /** UI language */
   language: Language
+  /** Show a short label of the current work above working characters. Adds a lane to the top of the strip */
+  workLabels: boolean
 }
 
 /** Main → renderer: scene size for the current window size */
@@ -41,6 +50,8 @@ export interface Layout {
   /** Scene width in unscaled pixels */
   sceneWidth: number
   sceneHeight: number
+  /** Height of the work label lane at the top of the scene. 0 when labels are off */
+  labelLane: number
 }
 
 /**
@@ -72,6 +83,8 @@ export interface SessionInfo {
   lastMessage: string
   /** Name of the tool in use while working */
   tool: string | null
+  /** Input of the tool in use (command, file path, pattern, ...). Orca may cut it short with … */
+  toolInput: string | null
   /** When the current status started (epoch ms) */
   since: number
 }

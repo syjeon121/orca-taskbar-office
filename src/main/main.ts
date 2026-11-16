@@ -10,7 +10,7 @@ import { applyLayout, createWindow, registerWindowIpc } from './window'
 // The installed app (product name "Taskbar Office") and dev runs share one settings folder (%APPDATA%\orca-taskbar-office)
 app.setName('orca-taskbar-office')
 
-// TASKBAR_OFFICE_SNAPSHOT=<png path>: saves the scene canvas as a PNG a few seconds after start
+// TASKBAR_OFFICE_SNAPSHOT=<png path>: saves the scene and its labels as a PNG a few seconds after start
 // (TASKBAR_OFFICE_SNAPSHOT_DELAY, default 7000 ms). A dev aid for when you can't see the screen (locked, remote).
 const snapshotPath = process.env.TASKBAR_OFFICE_SNAPSHOT
 // Keep rendering even when the window is covered
@@ -26,7 +26,7 @@ if (!app.requestSingleInstanceLock()) {
     if (snapshotPath) {
       const delay = Number(process.env.TASKBAR_OFFICE_SNAPSHOT_DELAY ?? 7000)
       setTimeout(async () => {
-        const url: string = await win.webContents.executeJavaScript("document.getElementById('scene').toDataURL('image/png')")
+        const url: string = await win.webContents.executeJavaScript('window.snapshot()')
         writeFileSync(snapshotPath, Buffer.from(url.split(',')[1], 'base64'))
       }, delay)
     }

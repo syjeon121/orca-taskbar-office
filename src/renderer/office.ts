@@ -411,7 +411,8 @@ export class Office {
     if (c.leaving) return null
     if (c.info.status === 'waiting') return 'bang'
     if (c.info.status === 'working') {
-      if (!c.arrived) return null
+      // Assigned but still walking to the work spot: a blue arrow sets it apart from idle wandering
+      if (!c.arrived) return c.facing === 1 ? 'goRight' : 'goLeft'
       // Alternate between the current tool icon and three dots
       const tool = toolKind(c.info.tool)
       return tool && now % TOOL_CYCLE_MS < TOOL_SHOW_MS ? tool : 'dots'

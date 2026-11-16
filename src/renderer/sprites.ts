@@ -5,7 +5,7 @@ import { CHAR_H, CHAR_W } from './scene'
 
 export type Pose = 'stand' | 'walk' | 'run' | 'lift' | 'talk' | 'type' | 'typeStand' | 'lapType' | 'standType' | 'sit' | 'wave' | 'cheer' | 'trouble' | 'drink'
 export type ToolKind = 'terminal' | 'edit' | 'read' | 'search' | 'web' | 'agent'
-export type BubbleKind = 'dots' | 'bang' | 'check' | 'fail' | 'pause' | 'talk' | ToolKind
+export type BubbleKind = 'dots' | 'bang' | 'check' | 'fail' | 'pause' | 'talk' | 'goLeft' | 'goRight' | ToolKind
 
 /** Maps a tool name to a bubble icon. Tool names differ between agents, so this matches on name fragments */
 export function toolKind(tool: string | null): ToolKind | null {
@@ -376,6 +376,9 @@ const ICONS: Record<Exclude<BubbleKind, 'dots'>, { color: string; rows: string[]
   fail: { color: '#e0453a', rows: ['.#...#.', '..#.#..', '...#...', '..#.#..', '.#...#.'] },
   pause: { color: '#7a7f8a', rows: ['..#.#..', '..#.#..', '..#.#..', '..#.#..', '..#.#..'] },
   talk: { color: '#6a7080', rows: ['.##.###', '.......', '.#####.', '.......', '.###.#.'] },
+  // Task assigned, heading to the work spot. The arrow points the way the character is walking
+  goLeft: { color: '#ffffff', bg: '#3b7dd8', border: '#1d3f70', rows: ['..#....', '.##....', '#######', '.##....', '..#....'] },
+  goRight: { color: '#ffffff', bg: '#3b7dd8', border: '#1d3f70', rows: ['....#..', '....##.', '#######', '....##.', '....#..'] },
   // Tools used while working
   terminal: { color: '#3a4050', rows: ['.#.....', '..#....', '.#.....', '....###', '.......'] },
   edit: { color: '#c9862a', rows: ['.....##', '....##.', '...##..', '.###...', '.#.....'] },

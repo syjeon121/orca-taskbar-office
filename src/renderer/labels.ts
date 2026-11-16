@@ -71,9 +71,9 @@ export interface LabelAnchor {
 }
 
 /** Widest a label may be, in scene pixels */
-const MAX_WIDTH = 70
+const MAX_WIDTH = 90
 /** Closest two labels may be (center to center, scene pixels). Closer ones are dropped rather than cut to a stub */
-const MIN_SPACING = 24
+const MIN_SPACING = 32
 /** Space kept between neighbouring labels, in scene pixels */
 const GAP = 3
 

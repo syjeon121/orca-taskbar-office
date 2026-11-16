@@ -1,6 +1,7 @@
 import type { SessionInfo, SessionStatus } from '../shared/types'
 import { CHAR_H, CHAR_W, COFFEE_SLOTS, TABLE_SIDE_OFFSET, TREADMILL_H, type Geometry } from './scene'
 import { drawBackEffects, drawFloor, drawFrontEffects, drawShadow, renderSceneArt, type SceneArt } from './scene-art'
+import { workLabel, type LabelAnchor } from './labels'
 import { drawBubble, drawCharacterOutlined, lookFor, toolKind, type BubbleKind, type Look, type Pose } from './sprites'
 
 // Takes the session list, then moves and draws the characters.
@@ -454,6 +455,19 @@ export class Office {
   centerX(id: string): number | null {
     const c = this.chars.find((o) => o.id === id)
     return c ? Math.round(c.x) + CHAR_W / 2 : null
+  }
+
+  /** Work labels for characters working at their spot */
+  labelAnchors(): LabelAnchor[] {
+    return this.chars
+      .filter((c) => !c.leaving && c.arrived && c.info.status === 'working')
+      .map((c) => ({
+        id: c.id,
+        cx: Math.round(c.x) + CHAR_W / 2,
+        text: workLabel(c.info.tool, c.info.toolInput, c.info.title),
+        since: c.info.since,
+      }))
+      .filter((a) => a.text)
   }
 
   setHovered(id: string | null): void {

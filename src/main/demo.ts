@@ -5,7 +5,16 @@ import { publishSessions } from './session-hub'
 
 const AGENT_TYPES = ['claude', 'codex', 'antigravity']
 const WORKSPACES = ['web-app', 'api-server', 'docs-site', 'orca-taskbar-office']
-const TOOLS = ['Bash', 'Edit', 'Read', 'Grep']
+/** Tool name and input pairs, shaped like what Orca reports */
+const TOOLS: [string, string][] = [
+  ['Bash', 'npm run typecheck'],
+  ['Bash', 'git status --short'],
+  ['Edit', 'C:/work/web-app/src/components/Header.tsx'],
+  ['Edit', 'docs/사용법.md'],
+  ['Read', 'C:/work/api-server/src/routes/users.ts'],
+  ['Grep', 'handleSubmit'],
+  ['WebFetch', 'https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API'],
+]
 
 let sessions: SessionInfo[] = []
 let nextId = 1
@@ -21,7 +30,9 @@ function publish(): void {
 
 function setStatus(session: SessionInfo, status: SessionStatus): void {
   session.status = status
-  session.tool = status === 'working' ? pick(TOOLS) : null
+  const [tool, input] = status === 'working' ? pick(TOOLS) : [null, null]
+  session.tool = tool
+  session.toolInput = input
   session.since = Date.now()
 }
 
@@ -45,6 +56,7 @@ function addSession(): void {
     quiet: false,
     unread: false,
     tool: null,
+    toolInput: null,
     since: Date.now(),
     lastMessage: 'This is a demo session.',
   })

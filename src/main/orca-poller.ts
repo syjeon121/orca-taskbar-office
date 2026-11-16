@@ -25,6 +25,7 @@ interface OrcaAgent {
   prompt?: string | null
   lastAssistantMessage?: string | null
   toolName?: string | null
+  toolInput?: unknown
   activity?: { unread?: boolean }
 }
 
@@ -122,6 +123,7 @@ function parse(stdout: string, environment: OrcaEnvironment | null): Candidate[]
           status,
           quiet,
           tool: agent.toolName ?? null,
+          toolInput: typeof agent.toolInput === 'string' && agent.toolInput ? agent.toolInput : null,
           since: agent.stateStartedAt ?? Date.now(),
           lastMessage: firstLine(agent.lastAssistantMessage).slice(0, 200),
         },

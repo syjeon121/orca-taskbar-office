@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain, screen, type Display, type Rectangle } from 'electron'
 import { join } from 'node:path'
-import { MIN_WIDTH_FRACTION, SCENE_HEIGHT, type Layout, type Settings } from '../shared/types'
+import { LABEL_LANE_HEIGHT, MIN_WIDTH_FRACTION, sceneHeight, type Layout, type Settings } from '../shared/types'
 import { getSettings, updateSettings } from './settings'
 
 let win: BrowserWindow | null = null
@@ -14,7 +14,7 @@ export function resolveDisplay(settings: Settings): Display {
 /** Position and size of the strip docked to the bottom of the work area (above the taskbar) */
 function computeBounds(settings: Settings): Rectangle {
   const area = resolveDisplay(settings).workArea
-  const height = SCENE_HEIGHT * settings.scale
+  const height = sceneHeight(settings.workLabels) * settings.scale
   // Round the width to a multiple of the scale so scene pixels aren't cut
   const width = Math.floor((area.width * settings.widthFraction) / settings.scale) * settings.scale
   const free = area.width - width
@@ -30,7 +30,12 @@ function computeBounds(settings: Settings): Rectangle {
 }
 
 function layoutOf(settings: Settings, bounds: Rectangle): Layout {
-  return { scale: settings.scale, sceneWidth: bounds.width / settings.scale, sceneHeight: SCENE_HEIGHT }
+  return {
+    scale: settings.scale,
+    sceneWidth: bounds.width / settings.scale,
+    sceneHeight: sceneHeight(settings.workLabels),
+    labelLane: settings.workLabels ? LABEL_LANE_HEIGHT : 0,
+  }
 }
 
 export function createWindow(): BrowserWindow {

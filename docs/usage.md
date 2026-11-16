@@ -12,6 +12,7 @@
 - **Finished but unread sessions** never go home.
 - **Finished sessions** leave through the door after the go-home time. New sessions arrive through the door.
 - Tool icons: terminal, edit, read, search, web and agent.
+- **Work labels**: a lane at the top of the strip shows what each working character is doing: the file name for edits and reads, the first words of a command (wrappers like `cd dir &&` or `bash -lc` are skipped), the host for web fetches. With no tool running, the conversation title is shown. When characters stand too close for every label, the most recently started work keeps its label; hover a character to bring its label back. The labels come from Orca's tool input, so they can show commands and paths: turn them off in the tray menu before sharing your screen if that matters.
 
 ## Controls
 
@@ -32,12 +33,13 @@ Clicking opens the workspace, not the session tab: Orca has no CLI command to op
 | Item | Description |
 |---|---|
 | Show office | Toggle the strip |
-| Size | Pixel scale 2x to 6x. Strip height is 35 px × scale |
+| Size | Pixel scale 2x to 6x. Strip height is 45 px × scale with work labels, 35 px × scale without |
 | Width | Full, 3/4, half, 1/3 |
 | Position | Left, center, right, or custom (set by dragging the ends) |
 | Monitor | Which monitor shows the strip. Falls back to the primary monitor if it's disconnected |
 | Go home after | How long finished sessions stay: 10 min, 30 min, 1 h, 3 h, 1 day, never |
 | Max characters | Limit including resting sessions: 6, 12, 20, 30. Busy and unread sessions are always shown |
+| Show current work above characters | Toggle the work label lane. Off makes the strip shorter |
 | Launch at Windows startup | Start at login |
 | Language | UI language: English (default) or 한국어 |
 | (status line) | Orca connection, remotes, working count, shown/total |
@@ -57,7 +59,7 @@ Clicking a remote character briefly opens a temporary terminal named "Taskbar Of
 ## Known limitations
 
 - Windows only.
-- Status changes show up with up to 3 seconds of delay.
+- Status changes show up with up to 3 seconds of delay, so tool calls shorter than that may never appear as a label.
 - Clicking opens the workspace, not the specific session tab.
 - Remote environments have no per-session read state, so the most recently finished session in an unread workspace is treated as unread.
 - The 8 px handles at each end of the strip don't pass clicks through.

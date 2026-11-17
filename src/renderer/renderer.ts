@@ -19,7 +19,7 @@ const labelCtx = labelCanvas.getContext('2d')!
 /** Width (CSS pixels) of the resize handle at each end of the strip */
 const EDGE_ZONE = 8
 
-let layout: Layout = { scale: 4, sceneWidth: 480, sceneHeight: 45, labelLane: 10 }
+let layout: Layout = { scale: 4, sceneWidth: 480, sceneHeight: 48, labelLane: 13 }
 const office = new Office(computeGeometry(layout))
 
 function setLayout(next: Layout): void {

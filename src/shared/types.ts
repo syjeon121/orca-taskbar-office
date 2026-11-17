@@ -3,7 +3,7 @@ import type { Language } from './i18n'
 /** Height of the office scene in unscaled pixels */
 export const BASE_SCENE_HEIGHT = 35
 /** Height of the work label lane above the scene, in unscaled pixels */
-export const LABEL_LANE_HEIGHT = 10
+export const LABEL_LANE_HEIGHT = 13
 
 /** Logical scene height in unscaled pixels, label lane included. Window height = this * scale */
 export function sceneHeight(workLabels: boolean): number {

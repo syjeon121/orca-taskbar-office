@@ -73,9 +73,11 @@ export interface LabelAnchor {
 /** Widest a label may be, in scene pixels */
 const MAX_WIDTH = 90
 /** Closest two labels may be (center to center, scene pixels). Closer ones are dropped rather than cut to a stub */
-const MIN_SPACING = 32
+const MIN_SPACING = 36
 /** Space kept between neighbouring labels, in scene pixels */
-const GAP = 3
+const GAP = 6
+/** Empty space above and below the label box inside the lane, in CSS pixels */
+const MARGIN_Y = 1
 
 /** Truncates with an ellipsis until the text fits */
 function fit(ctx: CanvasRenderingContext2D, text: string, max: number): string {
@@ -91,9 +93,10 @@ function fit(ctx: CanvasRenderingContext2D, text: string, max: number): string {
  */
 export function drawLabels(ctx: CanvasRenderingContext2D, anchors: LabelAnchor[], layout: Layout, hoveredId: string | null): void {
   const s = layout.scale
-  const boxH = layout.labelLane * s - 2
-  const font = Math.round(boxH * 0.64)
-  const padX = Math.round(font * 0.45)
+  const boxH = layout.labelLane * s - MARGIN_Y * 2
+  // The font follows the scale rather than the box, so the box leaves room above and below the text
+  const font = Math.round(s * 5.8)
+  const padX = Math.round(font * 0.85)
   const radius = Math.min(6, boxH / 2)
   ctx.font = `600 ${font}px "Segoe UI", "Malgun Gothic", sans-serif`
   ctx.textBaseline = 'middle'
@@ -116,7 +119,7 @@ export function drawLabels(ctx: CanvasRenderingContext2D, anchors: LabelAnchor[]
 
     ctx.fillStyle = 'rgba(30, 26, 40, 0.88)'
     ctx.beginPath()
-    ctx.roundRect(x, 1, w, boxH, radius)
+    ctx.roundRect(x, MARGIN_Y, w, boxH, radius)
     ctx.fill()
     if (hovered) {
       // Same yellow as the hover outline, to tie the label to its character
@@ -125,6 +128,6 @@ export function drawLabels(ctx: CanvasRenderingContext2D, anchors: LabelAnchor[]
       ctx.stroke()
     }
     ctx.fillStyle = '#f2f2ec'
-    ctx.fillText(text, x + padX, 1 + boxH / 2 + 1)
+    ctx.fillText(text, x + padX, MARGIN_Y + boxH / 2 + 1)
   })
 }

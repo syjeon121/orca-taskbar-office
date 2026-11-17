@@ -34,6 +34,8 @@ function setStatus(session: SessionInfo, status: SessionStatus): void {
   session.tool = tool
   session.toolInput = input
   session.since = Date.now()
+  // Like Orca: a finished session stays unread (keeping its mark) until it's looked at
+  session.unread = status !== 'working' && status !== 'waiting'
 }
 
 function withStatus(...statuses: SessionStatus[]): SessionInfo[] {

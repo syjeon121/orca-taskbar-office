@@ -37,6 +37,8 @@ interface Character {
   hold: { pose: 'cheer' | 'trouble'; until: number } | null
   /** Result mark shown overhead after finishing. Stays until the user acknowledges it */
   mark: Mark | null
+  /** When the mark was set (performance.now) */
+  markedAt: number
   /** The user clicked the character to acknowledge the result. Don't show it again even if Orca's read state lags behind */
   acked: boolean
   /** The last reply of the previous turn. Not shown as a work label until the agent says something new */
@@ -55,6 +57,13 @@ const TALK_TURN_MS = 1500
 /** Working bubble: the tool icon for the first part of this cycle, three dots for the rest */
 const TOOL_CYCLE_MS = 2600
 const TOOL_SHOW_MS = 1700
+
+/**
+ * A session that finishes while the user is looking at it in Orca is never flagged unread.
+ * If Orca still says read this long after the finish, the user has seen it and the mark goes away.
+ * Long enough for Orca's unread flag to show up in a poll or two (polls run every 3 s).
+ */
+const READ_GRACE_MS = 10000
 
 const LOUNGE_KINDS: Place['kind'][] = ['wander', 'coffee', 'sofa', 'table', 'treadmill', 'lift']
 
@@ -123,6 +132,7 @@ export class Office {
         work: null,
         hold: null,
         mark: null,
+        markedAt: 0,
         acked: false,
         staleMessage: null,
         loungeUntil: 0,
@@ -153,6 +163,7 @@ export class Office {
     // Just finished. Animate at the desk, then stay there with the result mark until acknowledged
     const atWork = c.arrived && c.work !== null && samePlace(c.place, c.work)
     c.acked = false
+    c.markedAt = now
     if (next === 'done') {
       if (atWork) c.hold = { pose: 'cheer', until: now + CHEER_MS }
       c.mark = 'check'
@@ -357,6 +368,7 @@ export class Office {
 
   update(dt: number, now: number): void {
     for (const c of this.chars) {
+      if (c.mark && !c.info.unread && !isBusy(c.info.status) && now - c.markedAt > READ_GRACE_MS) c.mark = null
       this.decidePlace(c, now)
       const target = this.placeX(c.place)
       if (c.arrived) {

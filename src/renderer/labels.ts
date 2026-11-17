@@ -61,6 +61,17 @@ export function workLabel(tool: string | null, input: string | null, title: stri
   return text
 }
 
+/** First sentence of what the agent last said, as plain text (markdown marks and a trailing colon or period removed) */
+export function narration(message: string): string {
+  const plain = message
+    .replace(/[*_`#>]+/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const sentence = /^.*?[.!?。](?=\s|$)/.exec(plain)?.[0] ?? plain
+  return sentence.replace(/[\s.:：。…]+$/, '').trim()
+}
+
 export interface LabelAnchor {
   id: string
   /** Scene x of the character's center */
@@ -71,7 +82,7 @@ export interface LabelAnchor {
 }
 
 /** Widest a label may be, in scene pixels */
-const MAX_WIDTH = 90
+const MAX_WIDTH = 120
 /** Closest two labels may be (center to center, scene pixels). Closer ones are dropped rather than cut to a stub */
 const MIN_SPACING = 36
 /** Space kept between neighbouring labels, in scene pixels */

@@ -1,7 +1,7 @@
 import type { SessionInfo, SessionStatus } from '../shared/types'
 import { CHAR_H, CHAR_W, COFFEE_SLOTS, TABLE_SIDE_OFFSET, TREADMILL_H, type Geometry } from './scene'
 import { drawBackEffects, drawFloor, drawFrontEffects, drawShadow, renderSceneArt, type SceneArt } from './scene-art'
-import { workLabel, type LabelAnchor } from './labels'
+import { narration, workLabel, type LabelAnchor } from './labels'
 import { drawBubble, drawCharacterOutlined, lookFor, toolKind, type BubbleKind, type Look, type Pose } from './sprites'
 
 // Takes the session list, then moves and draws the characters.
@@ -39,6 +39,8 @@ interface Character {
   mark: Mark | null
   /** The user clicked the character to acknowledge the result. Don't show it again even if Orca's read state lags behind */
   acked: boolean
+  /** The last reply of the previous turn. Not shown as a work label until the agent says something new */
+  staleMessage: string | null
   /** When the current lounge activity ends */
   loungeUntil: number
   alpha: number
@@ -122,6 +124,7 @@ export class Office {
         hold: null,
         mark: null,
         acked: false,
+        staleMessage: null,
         loungeUntil: 0,
         alpha: this.seeded ? 0 : 1,
         leaving: false,
@@ -139,6 +142,8 @@ export class Office {
   private onStatusChange(c: Character, prev: SessionStatus, next: SessionStatus, quiet: boolean, now: number): void {
     if (prev === next) return
     if (isBusy(next)) {
+      // A new turn starts with the previous turn's final reply still in lastMessage
+      if (!isBusy(prev)) c.staleMessage = c.info.lastMessage
       c.hold = null
       c.mark = null
       c.acked = false
@@ -464,7 +469,10 @@ export class Office {
       .map((c) => ({
         id: c.id,
         cx: Math.round(c.x) + CHAR_W / 2,
-        text: workLabel(c.info.tool, c.info.toolInput, c.info.title),
+        // What the agent last said about its work, or the tool's file/command when it said nothing new
+        text:
+          (c.info.lastMessage !== c.staleMessage && narration(c.info.lastMessage)) ||
+          workLabel(c.info.tool, c.info.toolInput, c.info.title),
         since: c.info.since,
       }))
       .filter((a) => a.text)

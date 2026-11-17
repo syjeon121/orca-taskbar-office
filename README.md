@@ -13,7 +13,7 @@ A pixel-art office that lives just above your Windows taskbar. Every [Orca](http
 - **Glanceable**: a thin, always-on-top strip above the taskbar. Empty space is click-through.
 - **One character per session**: working, waiting for you, done, failed and interrupted each look different.
 - **Results wait for you**: a finished character stays at its desk with its mark until you click it or read the session in Orca.
-- **See what they're doing**: a short label above each working character shows the file being edited or the command being run.
+- **See what they're doing**: a short label above each working character shows what the agent last said it is doing, or the file or command it is working on.
 - **Click to jump**: clicking a character opens its workspace in Orca.
 - **Remote environments**: sessions from remote Orca environments show up in the same office.
 
@@ -37,7 +37,7 @@ npm start
 
 | Session | Character | Bubble |
 |---|---|---|
-| Working | Types at a desk in the office | Current tool icon and `...`, with a label like `office.ts` or `npm test` on top |
+| Working | Types at a desk in the office | Current tool icon and `...`, with a label like `Let me run the tests` or `npm test` on top |
 | Waiting for you | Waves at the desk | Red `!` |
 | Done | Cheers, then waits at the desk until you check | White check on green |
 | Failed / interrupted | Scratches head, then waits at the desk | Red `X` / gray pause |

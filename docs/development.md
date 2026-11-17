@@ -46,7 +46,7 @@ Furniture order is set by `OFFICE_PATTERN` (office) and `LOUNGE_PATTERN` (lounge
 
 ## Orca data
 
-Sessions come from `orca worktree ps --json`, plus `--environment <id>` for each remote environment. Fields used per agent: `paneKey` (session id), `agentType`, `state`, `mainAgent.outcome`, `interrupted`, `stateStartedAt`, `conversationName`, `lastAssistantMessage`, `toolName`, `toolInput` (work labels) and `activity.unread`.
+Sessions come from `orca worktree ps --json`, plus `--environment <id>` for each remote environment. Fields used per agent: `paneKey` (session id), `agentType`, `state`, `mainAgent.outcome`, `interrupted`, `stateStartedAt`, `conversationName`, `lastAssistantMessage` (tooltip and work labels), `toolName`, `toolInput` (work labels) and `activity.unread`.
 
 | Orca | Character |
 |---|---|

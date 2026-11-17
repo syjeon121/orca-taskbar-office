@@ -12,7 +12,7 @@
 - **Finished but unread sessions** never go home.
 - **Finished sessions** leave through the door after the go-home time. New sessions arrive through the door.
 - Tool icons: terminal, edit, read, search, web and agent.
-- **Work labels**: a lane at the top of the strip shows what each working character is doing: the file name for edits and reads, the first words of a command (wrappers like `cd dir &&` or `bash -lc` are skipped), the host for web fetches. With no tool running, the conversation title is shown. When characters stand too close for every label, the most recently started work keeps its label; hover a character to bring its label back. The labels come from Orca's tool input, so they can show commands and paths: turn them off in the tray menu before sharing your screen if that matters.
+- **Work labels**: a lane at the top of the strip shows what each working character is doing. It shows the first sentence of what the agent last said (in whatever language the agent writes), so long sentences are cut short. Until the agent says something in the current turn, it shows the tool instead: the file name for edits and reads, the first words of a command (wrappers like `cd dir &&` or `bash -lc` are skipped), the host for web fetches. With no tool running, the conversation title is shown. When characters stand too close for every label, the most recently started work keeps its label; hover a character to bring its label back. The labels come from the agent's messages and Orca's tool input, so they can show commands and paths: turn them off in the tray menu before sharing your screen if that matters.
 
 ## Controls
 
@@ -33,7 +33,7 @@ Clicking opens the workspace, not the session tab: Orca has no CLI command to op
 | Item | Description |
 |---|---|
 | Show office | Toggle the strip |
-| Size | Pixel scale 2x to 6x. Strip height is 45 px × scale with work labels, 35 px × scale without |
+| Size | Pixel scale 2x to 6x. Strip height is 48 px × scale with work labels, 35 px × scale without |
 | Width | Full, 3/4, half, 1/3 |
 | Position | Left, center, right, or custom (set by dragging the ends) |
 | Monitor | Which monitor shows the strip. Falls back to the primary monitor if it's disconnected |

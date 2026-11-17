@@ -138,7 +138,18 @@ export function startDemo(): void {
   // TASKBAR_OFFICE_DEMO=showcase: a fixed mix of every state, used for README screenshots
   if (process.env.TASKBAR_OFFICE_DEMO === 'showcase') {
     for (let i = 0; i < 12; i++) addSession()
-    sessions.slice(0, 5).forEach((s) => setStatus(s, 'working'))
+    // Fixed work so the labels read the same in every screenshot: some say what the agent said, some the tool
+    const work: [string, string, string][] = [
+      ['Let me run the tests first.', 'Bash', 'npm test'],
+      ['', 'Edit', 'C:/work/web-app/src/components/Header.tsx'],
+      ['Checking how the API handles login.', 'Read', 'C:/work/api-server/src/routes/auth.ts'],
+      ['', 'Bash', 'npm run typecheck'],
+      ['Updating the docs to match.', 'Edit', 'docs/usage.md'],
+    ]
+    work.forEach(([message, tool, input], i) => {
+      setStatus(sessions[i], 'working')
+      Object.assign(sessions[i], { lastMessage: message, tool, toolInput: input })
+    })
     setStatus(sessions[5], 'waiting')
     for (const s of sessions.slice(6, 8)) s.unread = true
     publish()

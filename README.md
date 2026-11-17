@@ -20,7 +20,7 @@ A pixel-art office that lives just above your Windows taskbar. Every [Orca](http
 ## Requirements
 
 - Windows 10 or 11
-- [Orca](https://orca.dev) desktop app, running (tested with 1.4.255)
+- [Orca](https://orca.dev) desktop app, running (tested with 1.4.259)
 
 ## Install
 

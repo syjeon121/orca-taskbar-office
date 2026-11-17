@@ -1,6 +1,6 @@
 {
   "name": "orca-taskbar-office",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A pixel-art office on your Windows taskbar that shows your Orca agent sessions at work",
   "author": "syjeon121",
   "license": "MIT",

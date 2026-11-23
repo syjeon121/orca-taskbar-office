@@ -37,22 +37,31 @@ function focusOrcaWindow(): Promise<void> {
   })
 }
 
+/** Bot workspaces are folder workspaces: their ids look like `folder:<uuid>` and are selected without an `id:` prefix */
+function isFolderWorkspace(worktreeId: string): boolean {
+  return worktreeId.startsWith('folder:')
+}
+
+function selectorFor(worktreeId: string): string {
+  return isFolderWorkspace(worktreeId) ? worktreeId : `id:${worktreeId}`
+}
+
 /** Workspace on this PC: `worktree activate` switches the Orca view directly */
 async function openLocal(worktreeId: string): Promise<void> {
-  await callOrca(['worktree', 'activate', '--worktree', `id:${worktreeId}`, '--json'])
+  await callOrca(['worktree', 'activate', '--worktree', selectorFor(worktreeId), '--json'])
 }
 
 /**
- * Workspace in a remote environment.
- * `worktree activate --environment` reports success but doesn't change the Orca view on this PC.
- * The only command that moves the view to a remote workspace is `terminal switch --environment`, so we
- * create a temporary terminal there, switch to it to move the view, then close the terminal.
- * The view stays on that workspace after the terminal closes (verified with Orca 1.4.255).
+ * For workspaces `worktree activate` can't bring into view:
+ * - Remote environments: `worktree activate --environment` reports success but doesn't change the Orca view on this PC.
+ * - Folder workspaces (bots): `worktree activate` refuses them ("not supported yet", Orca 1.4.271).
+ * `terminal switch` does move the view, so we create a temporary terminal there, switch to it, then close it.
+ * The view stays on that workspace after the terminal closes (verified with Orca 1.4.255 remote, 1.4.271 bots).
  */
-async function openRemote(worktreeId: string, environmentId: string): Promise<void> {
-  const env = ['--environment', environmentId]
+async function openViaTerminal(worktreeId: string, environmentId: string | null): Promise<void> {
+  const env = environmentId ? ['--environment', environmentId] : []
   const created = JSON.parse(
-    await callOrca(['terminal', 'create', '--worktree', `id:${worktreeId}`, '--title', 'Taskbar Office', '--json', ...env], 20000),
+    await callOrca(['terminal', 'create', '--worktree', selectorFor(worktreeId), '--title', 'Taskbar Office', '--json', ...env], 20000),
   ) as { result?: { terminal?: { handle?: string } } }
   const handle = created.result?.terminal?.handle
   if (!handle) throw new Error('Failed to create the temporary terminal')
@@ -70,7 +79,7 @@ export async function openInOrca(worktreeId: string, environmentId: string | nul
   // Raise the window and switch the workspace in parallel to feel snappier
   const results = await Promise.allSettled([
     focusOrcaWindow(),
-    environmentId ? openRemote(worktreeId, environmentId) : openLocal(worktreeId),
+    environmentId || isFolderWorkspace(worktreeId) ? openViaTerminal(worktreeId, environmentId) : openLocal(worktreeId),
   ])
   for (const result of results) {
     if (result.status === 'rejected') console.error('Failed to open in Orca:', result.reason)

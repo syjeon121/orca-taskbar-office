@@ -57,7 +57,7 @@ Sessions come from `orca worktree ps --json`, plus `--environment <id>` for each
 | `done` + `cancellation` / `interruption`, or `interrupted: true` | Interrupted |
 | `done` + `superseded` / `unconfirmed` | Done, but goes to the lounge quietly without a mark |
 
-Clicking runs `orca worktree activate --worktree id:<worktreeId>`. For remote workspaces, see the comment on `openRemote` in `src/main/orca-actions.ts`.
+Clicking runs `orca worktree activate --worktree id:<worktreeId>`. Remote workspaces and bots (folder workspaces, `folder:<uuid>`) can't be activated that way; see the comment on `openViaTerminal` in `src/main/orca-actions.ts`.
 
 ## Dev environment variables
 
